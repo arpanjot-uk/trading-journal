@@ -61,7 +61,7 @@ export const Home: React.FC = () => {
             });
             setIsCreateModalOpen(false);
             setActiveJournalId(newJournalId as number);
-            navigate(`/dashboard`);
+            navigate(`/journal/${newJournalId}`);
         } catch (err) {
             console.error(err);
             setError('Failed to create journal.');
@@ -110,7 +110,7 @@ export const Home: React.FC = () => {
 
     const handleSelectJournal = (journalId: number) => {
         setActiveJournalId(journalId);
-        navigate('/dashboard');
+        navigate(`/journal/${journalId}`);
     };
 
     return (

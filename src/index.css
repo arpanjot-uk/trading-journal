@@ -2,42 +2,43 @@
 
 :root,
 [data-theme="dark"] {
-  /* Color Palette - Vibrant Dark Mode */
-  --bg-primary: #0a0e17;
-  --bg-secondary: #131b29;
-  --bg-tertiary: #1b263b;
+  color-scheme: dark;
+  /* Catppuccin Mocha Palette */
+  --bg-primary: #1e1e2e;
+  --bg-secondary: #181825;
+  --bg-tertiary: #11111b;
 
-  --text-primary: #f0f4f8;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: #cdd6f4;
+  --text-secondary: #a6adc8;
+  --text-muted: #6c7086;
 
-  --accent-primary: #3b82f6;
-  --accent-secondary: #8b5cf6;
-  --accent-hover: #2563eb;
+  --accent-primary: #8caaee;
+  --accent-secondary: #ca9ee6;
+  --accent-hover: #85c1dc;
 
   /* Trading specific colors */
-  --win-color: #10b981;
-  --win-bg: rgba(16, 185, 129, 0.15);
+  --win-color: #a6d189;
+  --win-bg: rgba(166, 209, 137, 0.15);
 
-  --loss-color: #ef4444;
-  --loss-bg: rgba(239, 68, 68, 0.15);
+  --loss-color: #e78284;
+  --loss-bg: rgba(231, 130, 132, 0.15);
 
-  --neutral-color: #f59e0b;
-  --neutral-bg: rgba(245, 158, 11, 0.15);
+  --neutral-color: #e5c890;
+  --neutral-bg: rgba(229, 200, 144, 0.15);
 
   /* Card Mode Surfaces */
-  --card-bg: rgba(27, 38, 59, 0.6);
-  --card-bg-hover: rgba(35, 49, 75, 0.6);
+  --card-bg: rgba(24, 24, 37, 0.8);
+  --card-bg-hover: rgba(49, 50, 68, 0.6);
   --card-border: rgba(255, 255, 255, 0.05);
   --card-border-strong: rgba(255, 255, 255, 0.15);
   --card-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.1);
   --card-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.2);
 
-  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color: #313244;
 
   --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
   --radius-round: 9999px;
 
   --transition-fast: 0.15s ease-in-out;
@@ -45,35 +46,68 @@
 }
 
 [data-theme="light"] {
-  /* Color Palette - Light Mode */
-  --bg-primary: #F8FAFC;
-  --bg-secondary: #F1F5F9;
-  --bg-tertiary: #E2E8F0;
+  color-scheme: light;
+  /* Catppuccin Latte Palette */
+  --bg-primary: #eff1f5;
+  --bg-secondary: #e6e9ef;
+  --bg-tertiary: #dce0e8;
 
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted: #94A3B8;
+  --text-primary: #4c4f69;
+  --text-secondary: #5c5f77;
+  --text-muted: #8c8fa1;
 
-  --accent-primary: #3B82F6;
-  --accent-secondary: #8B5CF6;
-  --accent-hover: #2563EB;
+  --accent-primary: #1e66f5;
+  --accent-secondary: #8839ef;
+  --accent-hover: #209fb5;
 
-  --win-color: #059669;
-  --win-bg: rgba(16, 185, 129, 0.1);
-  --loss-color: #DC2626;
-  --loss-bg: rgba(239, 68, 68, 0.1);
-  --neutral-color: #D97706;
-  --neutral-bg: rgba(245, 158, 11, 0.1);
+  --win-color: #40a02b;
+  --win-bg: rgba(64, 160, 43, 0.1);
+
+  --loss-color: #d20f39;
+  --loss-bg: rgba(210, 15, 57, 0.1);
+
+  --neutral-color: #df8e1d;
+  --neutral-bg: rgba(223, 142, 29, 0.1);
 
   /* Card Mode Surfaces */
-  --card-bg: #FFFFFF;
-  --card-bg-hover: #F8FAFC;
-  --card-border: rgba(15, 23, 42, 0.08);
-  --card-border-strong: rgba(15, 23, 42, 0.15);
+  --card-bg: #ffffff;
+  --card-bg-hover: #e6e9ef;
+  --card-border: rgba(76, 79, 105, 0.08);
+  --card-border-strong: rgba(76, 79, 105, 0.15);
   --card-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
   --card-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.025);
 
-  --border-color: rgba(15, 23, 42, 0.1);
+  --border-color: #ccd0da;
+}
+
+/* Fix Native Inputs */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity var(--transition-fast);
+}
+
+[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Customize spin buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  padding: 0 4px;
 }
 
 * {
@@ -120,6 +154,26 @@ select,
 textarea {
   font-family: inherit;
   color: var(--text-primary);
+}
+
+textarea.input-base {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  width: 100%;
+}
+
+textarea.input-base:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(140, 170, 238, 0.15);
+  background: var(--bg-primary);
 }
 
 h1,

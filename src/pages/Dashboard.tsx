@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, Wallet, Target, Info } from 'lucide-react';
 import {
     ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-    BarChart, Legend, ScatterChart, Scatter, ZAxis
+    BarChart, Legend, ScatterChart, Scatter, ZAxis, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 import { useMetrics } from '../hooks/useMetrics';
 import { Button } from '../components/ui/Button';
@@ -36,7 +36,6 @@ export const Dashboard: React.FC = () => {
     }
 
     const formatMoney = (val: number) => `$${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    const formatPct = (val: number) => `${val > 0 ? '+' : ''}${val.toFixed(2)}%`;
 
     return (
         <div>
@@ -49,35 +48,92 @@ export const Dashboard: React.FC = () => {
                 </div>
             </div>
 
-            {/* OVERVIEW SECTION (ALWAYS VISIBLE) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 3fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <h3 style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Info / Stats</h3>
+            {/* OVERVIEW SECTION (METRICS ROW) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                {/* 1. Net P&L */}
+                <Card style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}>
                     <div className="flex-between">
-                        <span className="text-secondary">Gain:</span>
-                        <span style={{ fontWeight: 600, color: stats.gain >= 0 ? 'var(--win-color)' : 'var(--loss-color)' }}>{formatPct(stats.gain)}</span>
+                        <span className="text-secondary" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Net P&L</span>
+                        <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '0.3rem', borderRadius: 'var(--radius-sm)', color: 'var(--accent-primary)' }}>
+                            <Wallet size={14} />
+                        </div>
                     </div>
+                    <span style={{ fontSize: '1.75rem', fontWeight: 700, color: stats.totalPnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)' }}>
+                        {formatMoney(stats.totalPnl)}
+                    </span>
+                </Card>
+
+                {/* 2. Trade Expectancy */}
+                <Card style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}>
                     <div className="flex-between">
-                        <span className="text-secondary">Drawdown:</span>
-                        <span style={{ fontWeight: 600 }}>{stats.maxDrawdown.toFixed(2)}%</span>
+                        <span className="text-secondary" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Trade expectancy</span>
+                        <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '0.3rem', borderRadius: 'var(--radius-sm)', color: '#8B5CF6' }}>
+                            <Target size={14} />
+                        </div>
                     </div>
-                    <div className="flex-between">
-                        <span className="text-secondary">Balance:</span>
-                        <span style={{ fontWeight: 600 }}>{formatMoney(stats.balance)}</span>
+                    <span style={{ fontSize: '1.75rem', fontWeight: 700, color: stats.expectancy >= 0 ? 'var(--win-color)' : 'var(--loss-color)' }}>
+                        {formatMoney(stats.expectancy)}
+                    </span>
+                </Card>
+
+                {/* 3. Profit Factor */}
+                <Card style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <span className="text-secondary" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Profit factor</span>
+                        <span style={{ fontSize: '1.75rem', fontWeight: 700 }}>{stats.profitFactor.toFixed(2)}</span>
                     </div>
-                    <div className="flex-between">
-                        <span className="text-secondary">Profit:</span>
-                        <span style={{ fontWeight: 600, color: stats.totalPnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)' }}>{formatMoney(stats.totalPnl)}</span>
+                    <svg width="48" height="48" viewBox="0 0 48 48">
+                        <circle cx="24" cy="24" r="20" fill="none" stroke="var(--loss-color)" strokeWidth="4" />
+                        <circle cx="24" cy="24" r="20" fill="none" stroke="var(--win-color)" strokeWidth="4"
+                            strokeDasharray={`${(stats.grossProfit / (stats.grossProfit + stats.grossLoss + 0.001)) * 125.6} 125.6`}
+                            strokeDashoffset="0" transform="rotate(-90 24 24)" strokeLinecap="round" />
+                    </svg>
+                </Card>
+
+                {/* 4. Trade win % */}
+                <Card style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <span className="text-secondary" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Trade win %</span>
+                        <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.winRate.toFixed(2)}%</span>
                     </div>
-                    <div className="flex-between" style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                        <span className="text-secondary">Trades:</span>
-                        <span style={{ fontWeight: 600 }}>{stats.totalTrades}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', marginTop: '0.5rem' }}>
+                        <svg width="60" height="30" viewBox="0 0 60 30" style={{ overflow: 'visible' }}>
+                            <path d="M 5 30 A 25 25 0 0 1 55 30" fill="none" stroke="var(--loss-color)" strokeWidth="5" strokeLinecap="round" />
+                            <path d="M 5 30 A 25 25 0 0 1 55 30" fill="none" stroke="var(--win-color)" strokeWidth="5" strokeLinecap="round"
+                                strokeDasharray={`${(stats.winRate / 100) * 78.5} 78.5`} />
+                        </svg>
+                        <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.6rem', fontWeight: 600 }}>
+                            <span style={{ background: 'var(--win-bg)', color: 'var(--win-color)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>{stats.totalWon}</span>
+                            <span style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>{stats.totalTrades - stats.totalWon - stats.totalLost}</span>
+                            <span style={{ background: 'var(--loss-bg)', color: 'var(--loss-color)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>{stats.totalLost}</span>
+                        </div>
                     </div>
                 </Card>
 
-                <Card style={{ height: '400px' }}>
+                {/* 5. Avg win/loss trade */}
+                <Card style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}>
+                    <span className="text-secondary" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Avg win/loss trade</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>{(stats.avgWin / (stats.avgLoss || 1)).toFixed(2)}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                            <div style={{ display: 'flex', width: '100%', height: '6px', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: `${(stats.avgWin / (stats.avgWin + stats.avgLoss + 0.001) * 100)}%`, background: 'var(--win-color)' }} />
+                                <div style={{ width: `${(stats.avgLoss / (stats.avgWin + stats.avgLoss + 0.001) * 100)}%`, background: 'var(--loss-color)' }} />
+                            </div>
+                            <div className="flex-between" style={{ fontSize: '0.7rem', fontWeight: 600 }}>
+                                <span className="text-win">${stats.avgWin.toFixed(0)}</span>
+                                <span className="text-loss">-${stats.avgLoss.toFixed(0)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+
+            {/* CHARTS ROW (GROWTH & PERFORMANCE SCORE) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                <Card style={{ height: '450px' }}>
                     <h3 style={{ marginBottom: '1rem' }}>Growth Chart</h3>
-                    <ResponsiveContainer width="100%" height="85%">
+                    <ResponsiveContainer width="100%" height="90%">
                         <ComposedChart data={charts.growthData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                             <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={12} />
@@ -88,6 +144,59 @@ export const Dashboard: React.FC = () => {
                             <Line yAxisId="left" type="monotone" dataKey="equity" name="Equity" stroke="var(--accent-primary)" strokeWidth={3} dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
+                </Card>
+
+                <Card style={{ height: '450px', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <h3 style={{ margin: 0 }}>Performance Score</h3>
+                        <Info size={16} className="text-muted" />
+                    </div>
+                    <div style={{ flex: 1, minHeight: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={charts.scoreData}>
+                                <PolarGrid stroke="var(--border-color)" />
+                                <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
+                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                <Radar name="Score" dataKey="A" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.4} />
+                            </RadarChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    {/* Overall Score Bar */}
+                    <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                        <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
+                            <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Your Score</span>
+                            <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>{stats.scoreOverview.toFixed(2)}</span>
+                        </div>
+                        <div style={{ position: 'relative', width: '100%', height: '8px', background: 'var(--bg-tertiary)', borderRadius: '4px', overflow: 'hidden' }}>
+                            {/* Gradient Background */}
+                            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(90deg, var(--loss-color) 0%, #EAB308 50%, var(--win-color) 100%)', opacity: 0.8 }} />
+
+                            {/* Mask overlay to block out unused portion */}
+                            <div style={{ position: 'absolute', top: 0, right: 0, width: `${100 - Math.min(100, Math.max(0, stats.scoreOverview))}%`, height: '100%', background: 'var(--bg-tertiary)', transition: 'width 0.5s ease-out' }} />
+
+                            {/* Indicator Tick */}
+                            <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: `calc(${Math.min(100, Math.max(0, stats.scoreOverview))}% - 2px)`,
+                                width: '4px',
+                                height: '100%',
+                                background: '#fff',
+                                borderRadius: '2px',
+                                boxShadow: '0 0 4px rgba(0,0,0,0.5)',
+                                transition: 'left 0.5s ease-out'
+                            }} />
+                        </div>
+                        <div className="flex-between text-muted" style={{ fontSize: '0.7rem', marginTop: '0.25rem', fontWeight: 600 }}>
+                            <span>0</span>
+                            <span>20</span>
+                            <span>40</span>
+                            <span>60</span>
+                            <span>80</span>
+                            <span>100</span>
+                        </div>
+                    </div>
                 </Card>
             </div>
 

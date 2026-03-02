@@ -13,10 +13,12 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     }, []);
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row' }}>
             <Navbar />
-            <main className="container" style={{ flex: 1, paddingBottom: '3rem' }}>
-                {children}
+            <main style={{ flex: 1, padding: '2rem 4rem', height: '100vh', overflowY: 'auto' }}>
+                <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+                    {children}
+                </div>
             </main>
         </div>
     );

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
-import { Plus, Edit2, Trash2, BookOpen } from 'lucide-react';
+import { Plus, Edit2, Trash2, BookOpen, Download } from 'lucide-react';
 import { db, type Trade } from '../db/db';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -45,6 +45,31 @@ export const JournalView: React.FC = () => {
         setTradeToDelete(null);
     };
 
+    const handleExportCSV = () => {
+        if (!trades || trades.length === 0) return;
+
+        const headers = ['Date', 'Pair', 'Direction', 'Lots', 'Strategy', 'RR', 'PnL', 'Duration'];
+        const rows = trades.map(t => [
+            format(new Date(t.openDate), 'yyyy-MM-dd HH:mm'),
+            t.pair,
+            t.direction,
+            t.lots.toFixed(2),
+            t.strategy,
+            t.rr.toString(),
+            t.netPnl.toFixed(2),
+            t.duration.toString()
+        ]);
+
+        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `trades_${journal?.name?.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     if (!activeJournalId) {
         return (
             <div className="flex-center" style={{ minHeight: '50vh', flexDirection: 'column', gap: '1rem' }}>
@@ -67,74 +92,79 @@ export const JournalView: React.FC = () => {
                     <h1 style={{ margin: 0, fontSize: '2rem' }}>Trade Log</h1>
                     <p className="text-secondary">{journal.name}</p>
                 </div>
-                <Button icon={<Plus size={18} />} onClick={() => setIsAddModalOpen(true)}>
-                    Add Entry
-                </Button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <Button variant="ghost" icon={<Download size={18} />} onClick={handleExportCSV}>
+                        Export CSV
+                    </Button>
+                    <Button icon={<Plus size={18} />} onClick={() => setIsAddModalOpen(true)}>
+                        Add Entry
+                    </Button>
+                </div>
             </div>
 
-            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflowX: 'auto', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
                     <thead>
-                        <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '2px solid var(--border-color)' }}>
-                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid var(--border-color)' }}>Date</th>
-                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid var(--border-color)' }}>Pair</th>
-                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid var(--border-color)' }}>Dir</th>
-                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid var(--border-color)' }}>Lots</th>
-                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid var(--border-color)' }}>Strategy</th>
-                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid var(--border-color)' }}>RR</th>
-                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid var(--border-color)' }}>PnL</th>
-                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid var(--border-color)' }}>Duration</th>
-                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</th>
+                        <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
+                            <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date</th>
+                            <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pair</th>
+                            <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dir</th>
+                            <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lots</th>
+                            <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Strategy</th>
+                            <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>RR</th>
+                            <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>PnL</th>
+                            <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</th>
+                            <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {trades && trades.length > 0 ? (
                             trades.map((trade) => (
-                                <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-                                    <td style={{ padding: '0.75rem 1rem', borderRight: '1px solid var(--border-color)', whiteSpace: 'nowrap' }}>
+                                <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s', background: 'transparent' }} onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                                    <td style={{ padding: '1.25rem 1.5rem', whiteSpace: 'nowrap' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span style={{ fontWeight: 500 }}>{format(new Date(trade.openDate), 'MMM dd, yyyy')}</span>
-                                            <span className="text-muted" style={{ fontSize: '0.75rem' }}>{format(new Date(trade.openDate), 'HH:mm')}</span>
+                                            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{format(new Date(trade.openDate), 'MMM dd, yyyy')}</span>
+                                            <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.1rem' }}>{format(new Date(trade.openDate), 'HH:mm')}</span>
                                         </div>
                                     </td>
-                                    <td style={{ padding: '0.75rem 1rem', borderRight: '1px solid var(--border-color)', fontWeight: 600, color: 'var(--text-primary)' }}>{trade.pair}</td>
-                                    <td style={{ padding: '0.75rem 1rem', borderRight: '1px solid var(--border-color)' }}>
+                                    <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{trade.pair}</td>
+                                    <td style={{ padding: '1.25rem 1.5rem' }}>
                                         <span style={{
                                             padding: '0.2rem 0.5rem',
                                             borderRadius: 'var(--radius-sm)',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
+                                            fontSize: '0.7rem',
+                                            fontWeight: 700,
                                             background: trade.direction === 'Buy' ? 'var(--win-bg)' : 'var(--loss-bg)',
                                             color: trade.direction === 'Buy' ? 'var(--win-color)' : 'var(--loss-color)'
                                         }}>
                                             {trade.direction.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td style={{ padding: '0.75rem 1rem', borderRight: '1px solid var(--border-color)', fontFamily: 'monospace', fontSize: '0.9rem' }}>{trade.lots.toFixed(2)}</td>
-                                    <td style={{ padding: '0.75rem 1rem', borderRight: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>{trade.strategy}</td>
-                                    <td style={{ padding: '0.75rem 1rem', borderRight: '1px solid var(--border-color)', fontFamily: 'monospace', fontSize: '0.9rem' }}>{trade.rr > 0 ? trade.rr.toFixed(1) : '-'}</td>
-                                    <td style={{ padding: '0.75rem 1rem', borderRight: '1px solid var(--border-color)', fontWeight: 600, fontFamily: 'monospace', fontSize: '0.95rem', color: trade.netPnl > 0 ? 'var(--win-color)' : trade.netPnl < 0 ? 'var(--loss-color)' : 'var(--text-secondary)' }}>
+                                    <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.lots.toFixed(2)}</td>
+                                    <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)' }}>{trade.strategy}</td>
+                                    <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.rr > 0 ? trade.rr.toFixed(1) : '-'}</td>
+                                    <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, fontFamily: 'monospace', fontSize: '0.95rem', color: trade.netPnl > 0 ? 'var(--win-color)' : trade.netPnl < 0 ? 'var(--loss-color)' : 'var(--text-secondary)' }}>
                                         {trade.netPnl > 0 ? '+' : ''}${trade.netPnl.toFixed(2)}
                                     </td>
-                                    <td style={{ padding: '0.75rem 1rem', borderRight: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                    <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                         {trade.duration < 60 ? `${trade.duration}m` : `${Math.floor(trade.duration / 60)}h ${trade.duration % 60}m`}
                                     </td>
-                                    <td style={{ padding: '0.75rem 1rem' }}>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                                        <div style={{ display: 'flex', gap: '0.75rem' }}>
                                             <button
                                                 onClick={() => openEdit(trade)}
-                                                style={{ padding: '0.25rem', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}
+                                                style={{ color: 'var(--text-muted)', transition: 'color 0.2s', padding: 0 }}
                                                 onMouseOver={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                                                onMouseOut={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                                onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
                                                 title="Edit Trade"
                                             >
                                                 <Edit2 size={16} />
                                             </button>
                                             <button
                                                 onClick={() => openDelete(trade)}
-                                                style={{ padding: '0.25rem', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}
+                                                style={{ color: 'var(--text-muted)', transition: 'color 0.2s', padding: 0 }}
                                                 onMouseOver={e => e.currentTarget.style.color = 'var(--loss-color)'}
-                                                onMouseOut={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                                onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
                                                 title="Delete Trade"
                                             >
                                                 <Trash2 size={16} />

@@ -198,6 +198,25 @@ export const useMetrics = (journalId: number) => {
 
         const gain = ((balance - startingBalance) / startingBalance) * 100;
 
+        // Compute Scores for Radar Chart (0-100 scale)
+        const scoreWinPct = winRate;
+        const scoreProfitFactor = Math.min(100, (profitFactor / 3) * 100);
+        const scoreAvgWinLoss = Math.min(100, ((avgWin / (avgLoss || 1)) / 3) * 100);
+        const scoreRecoveryFactor = Math.min(100, (totalPnl > 0 && maxDrawdown > 0 ? (gain / maxDrawdown) * 20 : totalPnl > 0 ? 100 : 0));
+        const scoreMaxDrawdown = Math.max(0, 100 - (maxDrawdown * 4)); // 25% drawdown = 0 score
+        const scoreConsistency = Math.max(0, 100 - (maxConsecutiveLosses * 5));
+
+        const scoreOverview = (scoreWinPct + scoreProfitFactor + scoreAvgWinLoss + scoreRecoveryFactor + scoreMaxDrawdown + scoreConsistency) / 6;
+
+        const scoreData = [
+            { subject: 'Win %', A: scoreWinPct },
+            { subject: 'Profit factor', A: scoreProfitFactor },
+            { subject: 'Avg win/loss', A: scoreAvgWinLoss },
+            { subject: 'Recovery factor', A: scoreRecoveryFactor },
+            { subject: 'Max drawdown', A: scoreMaxDrawdown },
+            { subject: 'Consistency', A: scoreConsistency },
+        ];
+
         return {
             loading: false,
             journal,
@@ -230,14 +249,16 @@ export const useMetrics = (journalId: number) => {
                 longTrades,
                 shortTrades,
                 longWon,
-                shortWon
+                shortWon,
+                scoreOverview
             },
             charts: {
                 growthData,
                 hourlyMap,
                 dailyMap,
                 durationData,
-                pairsData: Array.from(pairsMap.entries()).map(([currency, data]) => ({ currency, ...data }))
+                pairsData: Array.from(pairsMap.entries()).map(([currency, data]) => ({ currency, ...data })),
+                scoreData
             }
         };
     }, [journal, trades]);
