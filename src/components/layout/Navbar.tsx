@@ -13,7 +13,7 @@ export const Navbar: React.FC = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
     const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
-    const [theme, setTheme] = useState('dark');
+    const [theme, setTheme] = useState('light');
     const location = useLocation();
     const { activeJournalId } = useJournalContext();
 
@@ -25,8 +25,9 @@ export const Navbar: React.FC = () => {
     }, [activeJournalId, todayDateStr]);
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
+        document.documentElement.setAttribute('data-theme', savedTheme);
     }, []);
 
     const toggleTheme = () => {
@@ -61,7 +62,7 @@ export const Navbar: React.FC = () => {
                 <div style={{ background: 'var(--accent-primary)', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}>
                     <LineChart size={24} color="#fff" />
                 </div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>TradeJournal</h2>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Arpan Journal</h2>
             </Link>
 
             {activeJournalId ? (
