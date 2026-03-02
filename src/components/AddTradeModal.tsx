@@ -10,11 +10,12 @@ import { Button } from './ui/Button';
 interface AddTradeModalProps {
     isOpen: boolean;
     onClose: () => void;
+    tradeToEdit?: Trade | null;
 }
 
 const getDraftKey = (journalId: number) => `trade_draft_journal_${journalId}`;
 
-export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose }) => {
+export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, tradeToEdit }) => {
     const journals = useLiveQuery(() => db.journals.toArray());
     const settings = useLiveQuery(() => db.settings.toCollection().first());
 
@@ -66,6 +67,28 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose })
     useEffect(() => {
         if (!isOpen || !journals || journals.length === 0 || !settings) return;
 
+        if (tradeToEdit) {
+            setStep(1);
+            setJournalId(tradeToEdit.journalId);
+            setOpenDate(tradeToEdit.openDate);
+            setCloseDate(tradeToEdit.closeDate);
+            setPair(tradeToEdit.pair);
+            setStrategy(tradeToEdit.strategy);
+            setDirection(tradeToEdit.direction);
+            setLots(tradeToEdit.lots);
+            setResult(tradeToEdit.result);
+            setRr(tradeToEdit.rr);
+            setSl(tradeToEdit.sl);
+            setTp(tradeToEdit.tp);
+            setPnl(tradeToEdit.pnl);
+            setNetPnl(tradeToEdit.netPnl);
+            setTvLink(tradeToEdit.tvLink || '');
+            setEmotionNote(tradeToEdit.notes.emotion || '');
+            setTechnicalNote(tradeToEdit.notes.technical || '');
+            setChecklistAnswers(tradeToEdit.checklistAnswers || {});
+            return;
+        }
+
         let activeJournalId = journalId;
         if (activeJournalId === 0) {
             activeJournalId = journals[0].id!;
@@ -102,16 +125,15 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose })
             if (!pair && settings.pairs.length > 0) setPair(settings.pairs[0]);
             if (!strategy && settings.strategies.length > 0) setStrategy(settings.strategies[0].name);
         }
-    }, [isOpen, journalId, journals, settings]);
+    }, [isOpen, journalId, journals, settings, tradeToEdit]);
 
     const handleSaveDraft = () => {
-        if (journalId === 0) return;
+        if (journalId === 0 || tradeToEdit) return; // Don't save drafts when editing
         const draft = {
             step, openDate, closeDate, pair, strategy, direction, lots, result, rr, sl, tp, pnl, netPnl,
             tvLink, emotionNote, technicalNote, checklistAnswers
         };
         localStorage.setItem(getDraftKey(journalId), JSON.stringify(draft));
-        // Optionally show a toast here in the future
     };
 
     const handleDeleteDraft = () => {
@@ -141,7 +163,9 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose })
             .filter(t => t.openDate.startsWith(todayStr))
             .toArray();
 
-        const tradeNumber = todaysTrades.length + 1;
+        // If editing, preserve tradeNumber if it's the same day, else recalculate
+        const isSameDayEdit = tradeToEdit && tradeToEdit.openDate.startsWith(todayStr);
+        const tradeNumber = isSameDayEdit ? tradeToEdit.tradeNumber : todaysTrades.length + 1;
         const durationMin = differenceInMinutes(new Date(closeDate), new Date(openDate));
 
         const newTrade: Trade = {
@@ -160,8 +184,12 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose })
             checklistAnswers: Object.keys(checklistAnswers).length > 0 ? checklistAnswers : undefined
         };
 
-        await db.trades.add(newTrade);
-        localStorage.removeItem(getDraftKey(journalId)); // Clear draft on submit
+        if (tradeToEdit && tradeToEdit.id) {
+            await db.trades.put({ ...newTrade, id: tradeToEdit.id });
+        } else {
+            await db.trades.add(newTrade);
+            localStorage.removeItem(getDraftKey(journalId)); // Clear draft on submit
+        }
 
         if (settings) resetForm(0, settings.pairs[0] || '', settings.strategies[0]?.name || '');
         onClose();
@@ -171,7 +199,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose })
     const handleBack = () => setStep(prev => Math.max(prev - 1, 1) as 1 | 2 | 3);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Log a Trade" width="600px">
+        <Modal isOpen={isOpen} onClose={onClose} title={tradeToEdit ? "Edit Trade" : "Log a Trade"} width="600px">
 
             {/* Step Indicator */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>

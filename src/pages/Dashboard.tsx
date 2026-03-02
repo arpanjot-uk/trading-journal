@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 import {
     ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     BarChart, Legend, ScatterChart, Scatter, ZAxis
@@ -8,19 +8,31 @@ import {
 import { useMetrics } from '../hooks/useMetrics';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { useJournalContext } from '../context/JournalContext';
 
 type Tab = 'Advanced' | 'Trades' | 'Hourly' | 'Daily' | 'Duration';
 
 export const Dashboard: React.FC = () => {
-    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const journalId = parseInt(id || '0', 10);
+    const { activeJournalId } = useJournalContext();
+    const journalId = activeJournalId || 0;
 
     const { loading, journal, stats, charts } = useMetrics(journalId);
     const [activeTab, setActiveTab] = useState<Tab>('Advanced');
 
+    if (!activeJournalId) {
+        return (
+            <div className="flex-center" style={{ minHeight: '50vh', flexDirection: 'column', gap: '1rem' }}>
+                <BookOpen size={48} className="text-muted" />
+                <h2 className="text-secondary">No Journal Selected</h2>
+                <p className="text-muted">Please select a journal from the Journals page to view its dashboard.</p>
+                <Button onClick={() => navigate('/')}>Go to Journals</Button>
+            </div>
+        );
+    }
+
     if (loading || !journal || !stats || !charts) {
-        return <div className="container" style={{ paddingTop: '2rem' }}>Crunching numbers...</div>;
+        return <div className="container flex-center" style={{ minHeight: '50vh' }}>Crunching numbers...</div>;
     }
 
     const formatMoney = (val: number) => `$${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
