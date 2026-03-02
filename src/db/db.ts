@@ -39,7 +39,14 @@ export interface Trade {
   tvLink?: string; // TradingView link
   screenshotUrl?: string; // Additional or alternative chart screenshot link
   notes: {
-    emotion: string;
+    emotion: string | {
+      text: string;
+      fomo?: number;
+      patience?: number;
+      discipline?: number;
+      confidence?: number;
+      [key: string]: number | string | undefined;
+    };
     technical: string;
     other: string;
   };
@@ -64,6 +71,7 @@ export interface DailyMood {
 export interface Settings {
   id?: number;
   pairs: string[];
+  pairUnits?: Record<string, string>;
   strategies: StrategyDefinition[];
   enableMoodTracker: boolean;
 }

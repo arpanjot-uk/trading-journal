@@ -124,6 +124,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const settings = useLiveQuery(() => db.settings.toCollection().first());
 
     const [newPair, setNewPair] = useState('');
+    const [newPairUnit, setNewPairUnit] = useState('pips');
 
     const [builderOpen, setBuilderOpen] = useState(false);
     const [editingStrategy, setEditingStrategy] = useState<StrategyDefinition | null>(null);
@@ -131,9 +132,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const handleAddPair = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!settings || !newPair.trim()) return;
-        if (!settings.pairs.includes(newPair.trim().toUpperCase())) {
+        const pairName = newPair.trim().toUpperCase();
+        if (!settings.pairs.includes(pairName)) {
+            const updatedUnits = { ...(settings.pairUnits || {}) };
+            updatedUnits[pairName] = newPairUnit;
             await db.settings.update(settings.id!, {
-                pairs: [...settings.pairs, newPair.trim().toUpperCase()]
+                pairs: [...settings.pairs, pairName],
+                pairUnits: updatedUnits
             });
         }
         setNewPair('');
@@ -299,14 +304,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
                             {settings?.pairs.map(pair => (
                                 <span key={pair} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', fontSize: '0.875rem' }}>
-                                    {pair}
+                                    {pair} {settings.pairUnits?.[pair] && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({settings.pairUnits[pair]})</span>}
                                     <button onClick={() => handleRemovePair(pair)} style={{ color: 'var(--loss-color)', marginLeft: '0.25rem' }}><X size={14} /></button>
                                 </span>
                             ))}
                         </div>
-                        <form onSubmit={handleAddPair} style={{ display: 'flex', gap: '0.5rem' }}>
-                            <Input placeholder="e.g. AUDUSD" value={newPair} onChange={e => setNewPair(e.target.value)} style={{ marginBottom: 0 }} />
-                            <Button type="submit" size="sm" icon={<Plus size={16} />}>Add</Button>
+                        <form onSubmit={handleAddPair} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Pair</label>
+                                <Input placeholder="e.g. AUDUSD" value={newPair} onChange={e => setNewPair(e.target.value)} style={{ marginBottom: 0 }} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Unit</label>
+                                <select
+                                    value={newPairUnit}
+                                    onChange={e => setNewPairUnit(e.target.value)}
+                                    className="input-base"
+                                    style={{ padding: '0.5rem', height: '42px', marginBottom: 0 }}
+                                >
+                                    <option value="pips">Pips</option>
+                                    <option value="points">Points</option>
+                                    <option value="%">%</option>
+                                    <option value="$">$</option>
+                                </select>
+                            </div>
+                            <Button type="submit" size="sm" icon={<Plus size={16} />} style={{ height: '42px' }}>Add</Button>
                         </form>
                     </div>
 

@@ -19,9 +19,6 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
     const journals = useLiveQuery(() => db.journals.toArray());
     const settings = useLiveQuery(() => db.settings.toCollection().first());
 
-    // Step State
-    const [step, setStep] = useState<1 | 2 | 3>(1);
-
     // Form State
     const [journalId, setJournalId] = useState<number>(0);
     const [openDate, setOpenDate] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
@@ -40,6 +37,12 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
     const [tvLink, setTvLink] = useState('');
     const [screenshotUrl, setScreenshotUrl] = useState('');
     const [emotionNote, setEmotionNote] = useState('');
+    const [emotionRatings, setEmotionRatings] = useState<Record<string, number>>({
+        fomo: 3,
+        patience: 3,
+        discipline: 3,
+        confidence: 3
+    });
     const [technicalNote, setTechnicalNote] = useState('');
     const [checklistAnswers, setChecklistAnswers] = useState<Record<string, any>>({});
 
@@ -47,9 +50,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
 
     // Define reset to defaults
     const resetForm = (jId: number, setPairDefault: string, setStratDefault: string) => {
-        setStep(1);
         setJournalId(jId);
-        setOpenDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
         setOpenDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
         setCloseDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
         setPair(setPairDefault);
@@ -66,6 +67,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         setTvLink('');
         setScreenshotUrl('');
         setEmotionNote('');
+        setEmotionRatings({ fomo: 3, patience: 3, discipline: 3, confidence: 3 });
         setTechnicalNote('');
         setChecklistAnswers({});
     };
@@ -75,7 +77,6 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         if (!isOpen || !journals || journals.length === 0 || !settings) return;
 
         if (tradeToEdit) {
-            setStep(1);
             setJournalId(tradeToEdit.journalId);
             setOpenDate(tradeToEdit.openDate);
             setCloseDate(tradeToEdit.closeDate);
@@ -92,7 +93,22 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             setNetPnl(tradeToEdit.netPnl);
             setTvLink(tradeToEdit.tvLink || '');
             setScreenshotUrl(tradeToEdit.screenshotUrl || '');
-            setEmotionNote(tradeToEdit.notes.emotion || '');
+            const em = tradeToEdit.notes.emotion;
+            if (typeof em === 'string') {
+                setEmotionNote(em || '');
+                setEmotionRatings({ fomo: 3, patience: 3, discipline: 3, confidence: 3 });
+            } else if (em) {
+                setEmotionNote(em.text || '');
+                setEmotionRatings({
+                    fomo: em.fomo || 3,
+                    patience: em.patience || 3,
+                    discipline: em.discipline || 3,
+                    confidence: em.confidence || 3
+                });
+            } else {
+                setEmotionNote('');
+                setEmotionRatings({ fomo: 3, patience: 3, discipline: 3, confidence: 3 });
+            }
             setTechnicalNote(tradeToEdit.notes.technical || '');
             setChecklistAnswers(tradeToEdit.checklistAnswers || {});
             return;
@@ -108,7 +124,6 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         if (draftStr) {
             try {
                 const draft = JSON.parse(draftStr);
-                setStep(draft.step || 1);
                 setOpenDate(draft.openDate || format(new Date(), "yyyy-MM-dd'T'HH:mm"));
                 setCloseDate(draft.closeDate || format(new Date(), "yyyy-MM-dd'T'HH:mm"));
                 setPair(draft.pair || (settings.pairs.length > 0 ? settings.pairs[0] : ''));
@@ -125,6 +140,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                 setTvLink(draft.tvLink || '');
                 setScreenshotUrl(draft.screenshotUrl || '');
                 setEmotionNote(draft.emotionNote || '');
+                setEmotionRatings(draft.emotionRatings || { fomo: 3, patience: 3, discipline: 3, confidence: 3 });
                 setTechnicalNote(draft.technicalNote || '');
                 setChecklistAnswers(draft.checklistAnswers || {});
             } catch (e) {
@@ -136,13 +152,14 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             if (!pair && settings.pairs.length > 0) setPair(settings.pairs[0]);
             if (!strategy && settings.strategies.length > 0) setStrategy(settings.strategies[0].name);
         }
-    }, [isOpen, journalId, journals, settings, tradeToEdit]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, journalId, journals, settings, tradeToEdit]); // intentionally omitting pair/strategy variables to prevent overwriting user edits
 
     const handleSaveDraft = () => {
         if (journalId === 0 || tradeToEdit) return; // Don't save drafts when editing
         const draft = {
-            step, openDate, closeDate, pair, timeframe, strategy, direction, lots, result, rr, sl, tp, pnl, netPnl,
-            tvLink, screenshotUrl, emotionNote, technicalNote, checklistAnswers
+            openDate, closeDate, pair, timeframe, strategy, direction, lots, result, rr, sl, tp, pnl, netPnl,
+            tvLink, screenshotUrl, emotionNote, emotionRatings, technicalNote, checklistAnswers
         };
         localStorage.setItem(getDraftKey(journalId), JSON.stringify(draft));
     };
@@ -191,7 +208,17 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             netPnl: Number(netPnl) || 0,
             tvLink,
             screenshotUrl,
-            notes: { emotion: emotionNote, technical: technicalNote, other: '' },
+            notes: {
+                emotion: {
+                    text: emotionNote,
+                    fomo: emotionRatings.fomo,
+                    patience: emotionRatings.patience,
+                    discipline: emotionRatings.discipline,
+                    confidence: emotionRatings.confidence
+                },
+                technical: technicalNote,
+                other: ''
+            },
             duration: durationMin >= 0 ? durationMin : 0,
             checklistAnswers: Object.keys(checklistAnswers).length > 0 ? checklistAnswers : undefined
         };
@@ -207,222 +234,198 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         onClose();
     };
 
-    const handleNext = () => setStep(prev => Math.min(prev + 1, 3) as 1 | 2 | 3);
-    const handleBack = () => setStep(prev => Math.max(prev - 1, 1) as 1 | 2 | 3);
-
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={tradeToEdit ? "Edit Trade" : "Log a Trade"} width="600px">
+        <Modal isOpen={isOpen} onClose={onClose} title={tradeToEdit ? "Edit Trade" : "Log a Trade"} width="800px">
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-            {/* Step Indicator */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
-                {[1, 2, 3].map(s => (
-                    <div
-                        key={s}
-                        onClick={() => setStep(s as 1 | 2 | 3)}
-                        style={{
-                            flex: 1,
-                            height: '4px',
-                            borderRadius: '2px',
-                            background: s <= step ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
-                            transition: 'var(--transition-fast)',
-                            cursor: 'pointer'
-                        }}
-                    />
-                ))}
-            </div>
+                {/* --- Section 1: Core Details --- */}
+                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                    <h4 className="text-secondary" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Core Execution
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                        <Select
+                            label="Journal"
+                            value={journalId}
+                            onChange={e => setJournalId(Number(e.target.value))}
+                            options={journals ? journals.map(j => ({ label: j.name, value: j.id!.toString() })) : []}
+                        />
+                        <Select
+                            label="Direction"
+                            value={direction}
+                            onChange={e => setDirection(e.target.value as 'Buy' | 'Sell')}
+                            options={[
+                                { label: 'Buy (Long)', value: 'Buy' },
+                                { label: 'Sell (Short)', value: 'Sell' }
+                            ]}
+                        />
+                        <Select
+                            label="Currency Pair"
+                            value={pair}
+                            onChange={e => setPair(e.target.value)}
+                            options={settings ? settings.pairs.map(p => ({ label: p, value: p })) : []}
+                        />
+                        <Select
+                            label="Timeframe"
+                            value={timeframe}
+                            onChange={e => setTimeframe(e.target.value)}
+                            options={timeframes.map(tf => ({ label: tf, value: tf }))}
+                        />
+                        <Select
+                            label="Strategy / Setup"
+                            value={strategy}
+                            onChange={e => { setStrategy(e.target.value); setChecklistAnswers({}); }}
+                            options={settings ? settings.strategies.map(s => ({ label: s.name, value: s.name })) : []}
+                        />
+                    </div>
+                </div>
 
-            <form onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: '400px' }}>
+                {/* --- Section 2: Timing & Parameters --- */}
+                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                    <h4 className="text-secondary" style={{ marginBottom: '1rem' }}>Timing & Parameters</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                        <Input type="datetime-local" label="Open Date" value={openDate} onChange={e => setOpenDate(e.target.value)} required />
+                        <Input type="datetime-local" label="Close Date" value={closeDate} onChange={e => setCloseDate(e.target.value)} required />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+                        <Input type="number" step="0.01" label="Lots" value={lots} onChange={e => setLots(Number(e.target.value))} />
+                        <Input type="number" step="0.1" label={`SL (${settings?.pairUnits?.[pair] || 'pips'})`} value={sl} onChange={e => setSl(Number(e.target.value))} />
+                        <Input type="number" step="0.1" label={`TP (${settings?.pairUnits?.[pair] || 'pips'})`} value={tp} onChange={e => setTp(Number(e.target.value))} />
+                    </div>
+                </div>
 
-                {/* ---------------- STEP 1 ---------------- */}
-                {step === 1 && (
-                    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div>
-                            <h4 className="text-secondary" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Core Execution</h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <Select
-                                    label="Journal"
-                                    value={journalId}
-                                    onChange={e => setJournalId(Number(e.target.value))}
-                                    options={journals ? journals.map(j => ({ label: j.name, value: j.id!.toString() })) : []}
-                                />
-                                <Select
-                                    label="Direction"
-                                    value={direction}
-                                    onChange={e => setDirection(e.target.value as 'Buy' | 'Sell')}
-                                    options={[
-                                        { label: 'Buy (Long)', value: 'Buy' },
-                                        { label: 'Sell (Short)', value: 'Sell' }
-                                    ]}
-                                />
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-                                <Select
-                                    label="Currency Pair"
-                                    value={pair}
-                                    onChange={e => setPair(e.target.value)}
-                                    options={settings ? settings.pairs.map(p => ({ label: p, value: p })) : []}
-                                />
-                                <Select
-                                    label="Timeframe"
-                                    value={timeframe}
-                                    onChange={e => setTimeframe(e.target.value)}
-                                    options={timeframes.map(tf => ({ label: tf, value: tf }))}
-                                />
-                                <Select
-                                    label="Strategy / Setup"
-                                    value={strategy}
-                                    onChange={e => { setStrategy(e.target.value); setChecklistAnswers({}); }}
-                                    options={settings ? settings.strategies.map(s => ({ label: s.name, value: s.name })) : []}
-                                />
-                            </div>
+                {/* --- Section 3: Results --- */}
+                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                    <h4 className="text-secondary" style={{ marginBottom: '1rem' }}>Financial Result</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <Select
+                            label="Outcome"
+                            value={result}
+                            onChange={e => setResult(e.target.value as TradeResult)}
+                            options={[
+                                { label: 'Win', value: 'Win' },
+                                { label: 'Loss', value: 'Loss' },
+                                { label: 'Break Even', value: 'Break Even' }
+                            ]}
+                        />
+                        <Input type="number" step="0.01" label="Gross PnL ($)" value={pnl} onChange={e => setPnl(Number(e.target.value))} />
+                    </div>
+                </div>
+
+                {/* --- Section 4: Notes & Media --- */}
+                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                    <h4 className="text-secondary" style={{ marginBottom: '1rem' }}>Review & Media</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                        <Input type="url" label="TradingView Profile Link" placeholder="https://www.tradingview.com/u/..." value={tvLink} onChange={e => setTvLink(e.target.value)} />
+                        <Input type="url" label="Chart Screenshot Link" placeholder="https://www.tradingview.com/x/..." value={screenshotUrl} onChange={e => setScreenshotUrl(e.target.value)} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Technical Notes</label>
+                        <textarea
+                            className="input-base"
+                            rows={3}
+                            value={technicalNote}
+                            onChange={e => setTechnicalNote(e.target.value)}
+                            placeholder="What did price action tell you?"
+                            style={{ resize: 'vertical' }}
+                        />
+                    </div>
+                </div>
+
+                {/* --- Section 5: Psychology & Checklist --- */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+
+                    {/* Emotion Tracker */}
+                    <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h4 className="text-secondary" style={{ margin: 0 }}>Emotion Tracker</h4>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>1-5 Rating</span>
                         </div>
-
-                        <div>
-                            <h4 className="text-secondary" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Time</h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <Input type="datetime-local" label="Open Date" value={openDate} onChange={e => setOpenDate(e.target.value)} required />
-                                <Input type="datetime-local" label="Close Date" value={closeDate} onChange={e => setCloseDate(e.target.value)} required />
-                            </div>
-                        </div>
-
-                        {activeStrategy && activeStrategy.checklist && activeStrategy.checklist.length > 0 && (
-                            <div className="glass-panel" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--accent-primary)', borderRadius: 'var(--radius-md)' }}>
-                                <h4 className="text-accent-primary" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ fontSize: '1.2rem' }}>⚡</span> Pre-Trade Checklist
-                                </h4>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                                    {activeStrategy.checklist.map((section, sIdx) => (
-                                        <div key={sIdx}>
-                                            <h5 className="text-secondary" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>{section.section}</h5>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingLeft: '0.5rem', borderLeft: '2px solid var(--border-color)' }}>
-                                                {section.questions.map((q, qIdx) => (
-                                                    <div key={qIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                                        <input
-                                                            type="checkbox"
-                                                            id={`checklist-${sIdx}-${qIdx}`}
-                                                            checked={!!checklistAnswers[q]}
-                                                            onChange={(e) => handleChecklistChange(q, e.target.checked)}
-                                                            style={{
-                                                                width: '16px',
-                                                                height: '16px',
-                                                                accentColor: 'var(--accent-primary)',
-                                                                cursor: 'pointer',
-                                                                marginTop: '0.15rem'
-                                                            }}
-                                                        />
-                                                        <label htmlFor={`checklist-${sIdx}-${qIdx}`} style={{ fontSize: '0.875rem', color: 'var(--text-primary)', cursor: 'pointer', margin: 0, lineHeight: 1.4 }}>
-                                                            {q}
-                                                        </label>
-                                                    </div>
-                                                ))}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                            {['fomo', 'patience', 'discipline', 'confidence'].map(emo => (
+                                <div key={emo} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{emo}</label>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 500 }}>{emotionRatings[emo]}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.2rem', background: 'var(--bg-tertiary)', padding: '0.2rem', borderRadius: '4px' }}>
+                                        {[1, 2, 3, 4, 5].map(val => (
+                                            <div
+                                                key={val}
+                                                onClick={() => setEmotionRatings(prev => ({ ...prev, [emo]: val }))}
+                                                style={{
+                                                    flex: 1, height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    fontSize: '0.75rem', fontWeight: emotionRatings[emo] === val ? 600 : 400, cursor: 'pointer', borderRadius: '3px',
+                                                    background: emotionRatings[emo] === val ? 'var(--accent-primary)' : 'transparent',
+                                                    color: emotionRatings[emo] === val ? '#fff' : 'var(--text-primary)',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                {val}
                                             </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Emotional Notes</label>
+                            <textarea
+                                className="input-base"
+                                rows={2}
+                                value={emotionNote}
+                                onChange={e => setEmotionNote(e.target.value)}
+                                placeholder="Execution or mood thoughts?"
+                                style={{ fontSize: '0.9rem', resize: 'vertical' }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Pre-Trade Checklist */}
+                    {activeStrategy && activeStrategy.checklist && activeStrategy.checklist.length > 0 && (
+                        <div style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--accent-primary)' }}>
+                            <h4 className="text-accent-primary" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                                <span style={{ fontSize: '1.2rem' }}>⚡</span> Pre-Trade Checklist
+                            </h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '300px', overflowY: 'auto' }}>
+                                {activeStrategy.checklist.map((section, sIdx) => (
+                                    <div key={sIdx}>
+                                        <h5 className="text-secondary" style={{ marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.85rem' }}>{section.section}</h5>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingLeft: '0.5rem', borderLeft: '2px solid var(--border-color)' }}>
+                                            {section.questions.map((q, qIdx) => (
+                                                <div key={qIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`checklist-${sIdx}-${qIdx}`}
+                                                        checked={!!checklistAnswers[q]}
+                                                        onChange={(e) => handleChecklistChange(q, e.target.checked)}
+                                                        style={{ width: '16px', height: '16px', accentColor: 'var(--accent-primary)', cursor: 'pointer', marginTop: '0.15rem' }}
+                                                    />
+                                                    <label htmlFor={`checklist-${sIdx}-${qIdx}`} style={{ fontSize: '0.85rem', color: 'var(--text-primary)', cursor: 'pointer', margin: 0, lineHeight: 1.4 }}>
+                                                        {q}
+                                                    </label>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* ---------------- STEP 2 ---------------- */}
-                {step === 2 && (
-                    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div>
-                            <h4 className="text-secondary" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Trade Parameters</h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '1rem' }}>
-                                <Input type="number" step="0.01" label="Lots" value={lots} onChange={e => setLots(Number(e.target.value))} />
-                                <Input type="number" step="0.1" label="RR" value={rr} onChange={e => setRr(Number(e.target.value))} />
-                                <Input type="number" step="0.1" label="SL (pips)" value={sl} onChange={e => setSl(Number(e.target.value))} />
-                                <Input type="number" step="0.1" label="TP (pips)" value={tp} onChange={e => setTp(Number(e.target.value))} />
+                                    </div>
+                                ))}
                             </div>
                         </div>
+                    )}
+                </div>
 
-                        <div>
-                            <h4 className="text-secondary" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Financial Result</h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-                                <Select
-                                    label="Outcome"
-                                    value={result}
-                                    onChange={e => setResult(e.target.value as TradeResult)}
-                                    options={[
-                                        { label: 'Win', value: 'Win' },
-                                        { label: 'Loss', value: 'Loss' },
-                                        { label: 'Break Even', value: 'Break Even' }
-                                    ]}
-                                />
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <Input type="number" step="0.01" label="Gross PnL ($)" value={pnl} onChange={e => setPnl(Number(e.target.value))} />
-                                    <Input type="number" step="0.01" label="Net PnL ($)" value={netPnl} onChange={e => setNetPnl(Number(e.target.value))} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* ---------------- STEP 3 ---------------- */}
-                {step === 3 && (
-                    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div>
-                            <h4 className="text-secondary" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Review & Media</h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <Input type="url" label="TradingView Profile Link" placeholder="https://www.tradingview.com/u/..." value={tvLink} onChange={e => setTvLink(e.target.value)} />
-                                <Input type="url" label="Chart Screenshot Link" placeholder="https://www.tradingview.com/x/..." value={screenshotUrl} onChange={e => setScreenshotUrl(e.target.value)} />
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-                                <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Technical Notes</label>
-                                <textarea
-                                    className="input-base"
-                                    rows={4}
-                                    value={technicalNote}
-                                    onChange={e => setTechnicalNote(e.target.value)}
-                                    placeholder="What did price action tell you?"
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-                                <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Emotional Notes</label>
-                                <textarea
-                                    className="input-base"
-                                    rows={4}
-                                    value={emotionNote}
-                                    onChange={e => setEmotionNote(e.target.value)}
-                                    placeholder="Were you tilted? FOMO? Patient?"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
-
+                <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
                     <Button type="button" variant="ghost" className="text-loss" onClick={handleDeleteDraft}>
                         Delete
                     </Button>
 
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <Button type="button" variant="ghost" onClick={handleSaveDraft}>
-                            Save
+                            Save Draft
                         </Button>
-                        {step > 1 && (
-                            <Button type="button" variant="secondary" onClick={handleBack}>
-                                Back
-                            </Button>
-                        )}
-                        {step < 3 && (
-                            <Button type="button" variant="ghost" onClick={() => handleSubmit()} style={{ color: 'var(--accent-primary)' }}>
-                                Submit Fast
-                            </Button>
-                        )}
-                        {step < 3 ? (
-                            <Button type="button" onClick={handleNext}>
-                                Next
-                            </Button>
-                        ) : (
-                            <Button type="submit">
-                                Submit Trade
-                            </Button>
-                        )}
+                        <Button type="submit">
+                            Submit Trade
+                        </Button>
                     </div>
                 </div>
 
