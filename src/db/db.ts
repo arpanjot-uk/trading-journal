@@ -36,7 +36,6 @@ export interface Trade {
   tp: number; // Take Profit (pips/ticks)
   pnl: number;
   netPnl: number;
-  tvLink?: string; // TradingView link
   screenshotUrl?: string; // Additional or alternative chart screenshot link
   notes: {
     emotion: {

@@ -40,7 +40,6 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
     const [tp, setTp] = useState<number | ''>('');
     const [pnl, setPnl] = useState<number | ''>('');
     const [netPnl, setNetPnl] = useState<number | ''>('');
-    const [tvLink, setTvLink] = useState('');
     const [screenshotUrl, setScreenshotUrl] = useState('');
     const [emotionNote, setEmotionNote] = useState('');
     const [emotionRatings, setEmotionRatings] = useState<Record<string, number>>({
@@ -79,7 +78,6 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         setTp('');
         setPnl('');
         setNetPnl('');
-        setTvLink('');
         setScreenshotUrl('');
         setEmotionNote('');
         setEmotionRatings({ fomo: 0, patience: 0, discipline: 0, confidence: 0 });
@@ -108,7 +106,6 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             setTp(tradeToEdit.tp);
             setPnl(tradeToEdit.pnl);
             setNetPnl(tradeToEdit.netPnl);
-            setTvLink(tradeToEdit.tvLink || '');
             setScreenshotUrl(tradeToEdit.screenshotUrl || '');
             const em = tradeToEdit.notes.emotion;
             if (typeof em === 'string') {
@@ -156,7 +153,6 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                 setTp(draft.tp ?? '');
                 setPnl(draft.pnl ?? '');
                 setNetPnl(draft.netPnl ?? '');
-                setTvLink(draft.tvLink || '');
                 setScreenshotUrl(draft.screenshotUrl || '');
                 setEmotionNote(draft.emotionNote || '');
                 setEmotionRatings(draft.emotionRatings || { fomo: 0, patience: 0, discipline: 0, confidence: 0 });
@@ -191,10 +187,10 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         const draft = {
             openDate, closeDate,
             pair, timeframe, strategy, direction, lots, result, rr, sl, tp, pnl, netPnl,
-            tvLink, screenshotUrl, emotionNote, emotionRatings, technicalNote, checklistAnswers
+            screenshotUrl, emotionNote, emotionRatings, technicalNote, checklistAnswers
         };
         localStorage.setItem(getDraftKey(journalId), JSON.stringify(draft));
-    }, [journalId, tradeToEdit, openDate, closeDate, pair, timeframe, strategy, direction, lots, result, rr, sl, tp, pnl, netPnl, tvLink, screenshotUrl, emotionNote, emotionRatings, technicalNote, checklistAnswers]);
+    }, [journalId, tradeToEdit, openDate, closeDate, pair, timeframe, strategy, direction, lots, result, rr, sl, tp, pnl, netPnl, screenshotUrl, emotionNote, emotionRatings, technicalNote, checklistAnswers]);
 
 
 
@@ -242,7 +238,6 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             tp: Number(tp) || 0,
             pnl: Number(pnl) || 0,
             netPnl: Number(netPnl) || 0,
-            tvLink,
             screenshotUrl,
             notes: {
                 emotion: {
@@ -379,8 +374,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                         </div>
                         <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Review &amp; Media</h4>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                        <Input type="url" label="TradingView Profile Link" placeholder="https://www.tradingview.com/u/..." value={tvLink} onChange={e => setTvLink(e.target.value)} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', marginBottom: '1rem' }}>
                         <Input type="url" label="Chart Screenshot Link" placeholder="https://www.tradingview.com/x/..." value={screenshotUrl} onChange={e => setScreenshotUrl(e.target.value)} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>

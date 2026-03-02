@@ -91,8 +91,7 @@ export const JournalView: React.FC = () => {
         };
 
         const headers = [
-            'Date', 'Time', 'Pair', 'Direction', 'Lots', 'Strategy', 'Timeframe',
-            'SL', 'TP', 'RR', 'Outcome', 'Gross PnL', 'Net PnL', 'Duration (m)', 'TradingView Link', 'Screenshot URL',
+            'Timeframe', 'SL', 'TP', 'RR', 'Outcome', 'Gross PnL', 'Net PnL', 'Duration (m)', 'Screenshot URL',
             'Mood Score', 'Energy Level', 'Stress Level', 'Sleep (hrs)', 'Diet', 'Caffeine', 'Exercised', 'Daily Notes'
         ].map(h => q(h));
 
@@ -138,7 +137,6 @@ export const JournalView: React.FC = () => {
                         q(t.pnl ? t.pnl.toFixed(2) : '0.00'),
                         q(t.netPnl ? t.netPnl.toFixed(2) : '0.00'),
                         q(t.duration ? t.duration.toString() : '0'),
-                        q(t.tvLink ?? ''),
                         q(t.screenshotUrl ?? ''),
                         ...moodCols
                     ]);
@@ -148,7 +146,7 @@ export const JournalView: React.FC = () => {
                 rows.push([
                     q(dateStr),
                     q(''), q(''), q(''), q(''), q(''), q(''),
-                    q(''), q(''), q(''), q(''), q(''), q(''), q(''), q(''), q(''),
+                    q(''), q(''), q(''), q(''), q(''), q(''), q(''), q(''),
                     ...moodCols
                 ]);
             }
@@ -350,12 +348,11 @@ export const JournalView: React.FC = () => {
                                                             )}
 
                                                             {/* Media links */}
-                                                            {(trade.tvLink || trade.screenshotUrl) && (
+                                                            {trade.screenshotUrl && (
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                                                     <h5 className="text-secondary" style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Media Links</h5>
                                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                                        {trade.tvLink && <a href={trade.tvLink} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>→ TradingView Profile</a>}
-                                                                        {trade.screenshotUrl && <a href={trade.screenshotUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>→ Chart Screenshot</a>}
+                                                                        <a href={trade.screenshotUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>→ Chart Screenshot</a>
                                                                     </div>
                                                                 </div>
                                                             )}
