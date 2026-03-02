@@ -6,6 +6,7 @@ import {
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Trade } from '../db/db';
 import { Card } from './ui/Card';
+import { Modal } from './ui/Modal';
 
 interface CalendarViewProps {
     trades: Trade[];
@@ -26,6 +27,7 @@ const formatMoney = (val: number) => {
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ trades }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [selectedDayStats, setSelectedDayStats] = useState<DailyStats | null>(null);
 
     const startDate = startOfWeek(startOfMonth(currentDate));
     const endDate = endOfWeek(endOfMonth(currentDate));
@@ -176,7 +178,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ trades }) => {
                                 if (isTodayDate) cellClass += ' active';
 
                                 return (
-                                    <div key={dateKey} className={cellClass} style={{ opacity: isCurrentMonth ? 1 : 0.4 }}>
+                                    <div
+                                        key={dateKey}
+                                        className={cellClass}
+                                        style={{
+                                            opacity: isCurrentMonth ? 1 : 0.4,
+                                            cursor: stats && stats.trades.length > 0 ? 'pointer' : 'default'
+                                        }}
+                                        onClick={() => {
+                                            if (stats && stats.trades.length > 0) {
+                                                setSelectedDayStats(stats);
+                                            }
+                                        }}
+                                    >
                                         <div style={{ textAlign: 'right', fontWeight: isTodayDate ? 700 : 400, color: isTodayDate ? 'var(--accent-primary)' : 'inherit', marginBottom: '0.5rem' }}>
                                             {format(day, 'd')}
                                         </div>
@@ -212,6 +226,115 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ trades }) => {
                     ))}
                 </div>
             </Card>
+            {/* Day Summary Modal */}
+            {selectedDayStats && (
+                <Modal
+                    isOpen={!!selectedDayStats}
+                    onClose={() => setSelectedDayStats(null)}
+                    title={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.25rem' }}>
+                            <span style={{ fontWeight: 600 }}>{format(selectedDayStats.date, 'EEE, MMM dd, yyyy')}</span>
+                            <span className="text-muted" style={{ fontSize: '1.5rem', lineHeight: 1 }}>•</span>
+                            <span style={{ color: selectedDayStats.netPnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)', fontWeight: 600 }}>
+                                Net P&L {selectedDayStats.netPnl >= 0 ? '+' : ''}{formatMoney(selectedDayStats.netPnl)}
+                            </span>
+                        </div>
+                    }
+                    width="850px"
+                >
+                    {(() => {
+                        let grossProfit = 0;
+                        let grossLoss = 0;
+                        let totalLots = 0;
+                        selectedDayStats.trades.forEach(t => {
+                            if (t.netPnl > 0) grossProfit += t.netPnl;
+                            else grossLoss += Math.abs(t.netPnl);
+                            totalLots += t.lots;
+                        });
+                        const winrate = selectedDayStats.trades.length ? ((selectedDayStats.winCount / selectedDayStats.trades.length) * 100) : 0;
+                        const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? 999 : 0);
+
+                        return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                {/* Top Stats Row */}
+                                <div style={{ display: 'flex', gap: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', width: '100%' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Total trades</span>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>{selectedDayStats.trades.length}</span>
+
+                                            <span className="text-secondary" style={{ fontSize: '0.85rem', marginTop: '1rem' }}>Winrate</span>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>{winrate.toFixed(0)}%</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Winners</span>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--win-color)' }}>{selectedDayStats.winCount}</span>
+
+                                            <span className="text-secondary" style={{ fontSize: '0.85rem', marginTop: '1rem' }}>Losers</span>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--loss-color)' }}>{selectedDayStats.lossCount}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Gross P&L</span>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 600, color: (grossProfit - grossLoss) >= 0 ? 'var(--win-color)' : 'var(--loss-color)' }}>
+                                                {formatMoney(grossProfit - grossLoss)}
+                                            </span>
+
+                                            <span className="text-secondary" style={{ fontSize: '0.85rem', marginTop: '1rem' }}>Volume / Lots</span>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>{totalLots.toFixed(2)}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Commissions</span>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>$0.00</span>
+
+                                            <span className="text-secondary" style={{ fontSize: '0.85rem', marginTop: '1rem' }}>Profit factor</span>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>{profitFactor.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Table of Trades */}
+                                <div style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', overflowX: 'auto', border: '1px solid var(--border-color)' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                        <thead>
+                                            <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Open time</th>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Ticker</th>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Side</th>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Net P&L</th>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Realized R</th>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Playbook</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {selectedDayStats.trades.map(trade => (
+                                                <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem' }}>{format(new Date(trade.openDate), 'HH:mm')}</td>
+                                                    <td style={{ padding: '0.75rem 1rem' }}>
+                                                        <span style={{ background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '12px', fontSize: '0.8rem', border: '1px solid var(--border-color)' }}>{trade.pair}</span>
+                                                    </td>
+                                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: trade.direction === 'Buy' ? 'var(--win-color)' : 'var(--loss-color)', fontWeight: 600 }}>
+                                                        {trade.direction.toUpperCase()}
+                                                    </td>
+                                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: trade.netPnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)', fontWeight: 600 }}>
+                                                        {formatMoney(trade.netPnl)}
+                                                    </td>
+                                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                        {trade.rr > 0 ? trade.rr.toFixed(2) + 'R' : '-'}
+                                                    </td>
+                                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                        {trade.strategy || '-'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                            </div>
+                        );
+                    })()}
+                </Modal>
+            )}
         </div>
     );
 };
