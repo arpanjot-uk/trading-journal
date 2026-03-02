@@ -10,15 +10,13 @@ interface DailyMoodModalProps {
     isOpen: boolean;
     onClose: () => void;
     journalId: number;
-    initialDate?: string; // Optional Date to edit a specific date, otherwise defaults to today
     existingMood?: DailyMood | null; // Optional if we are editing
 }
 
-export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose, journalId, initialDate, existingMood }) => {
+export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose, journalId, existingMood }) => {
     // Face Mapping: 1 = Terrible, 5 = Excellent
     const defaultDate = format(new Date(), 'yyyy-MM-dd');
 
-    const [date, setDate] = useState(initialDate || defaultDate);
     const [moodScore, setMoodScore] = useState<number>(0); // 0 means not selected
     const [energyLevel, setEnergyLevel] = useState<number>(50);
     const [stressLevel, setStressLevel] = useState<number>(50);
@@ -34,7 +32,6 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
         if (!isOpen) return;
 
         if (existingMood) {
-            setDate(existingMood.date);
             setMoodScore(existingMood.moodScore);
             setEnergyLevel(existingMood.energyLevel);
             setStressLevel(existingMood.stressLevel);
@@ -46,7 +43,6 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
             setNotes(existingMood.notes || '');
         } else {
             // Reset to defaults
-            setDate(initialDate || defaultDate);
             setMoodScore(0);
             setEnergyLevel(50);
             setStressLevel(50);
@@ -57,7 +53,7 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
             setScreenTime('');
             setNotes('');
         }
-    }, [isOpen, existingMood, initialDate, defaultDate]);
+    }, [isOpen, existingMood]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,7 +64,7 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
 
         const moodData: DailyMood = {
             journalId,
-            date,
+            date: defaultDate, // Always today
             moodScore,
             energyLevel,
             stressLevel,
@@ -86,7 +82,7 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
             } else {
                 // Prevent duplicate entries for the same day
                 const existing = await db.dailyMoods
-                    .where({ journalId, date })
+                    .where({ journalId, date: defaultDate })
                     .first();
 
                 if (existing) {
@@ -113,11 +109,6 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="How's your mood?" width="550px">
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-
-                {/* Date Selection (Hidden usually, but useful for historical backfill) */}
-                <div style={{ display: existingMood ? 'block' : 'none' }}>
-                    <Input type="date" label="Log Date" value={date} onChange={e => setDate(e.target.value)} required />
-                </div>
 
                 {/* Mood Face Selector */}
                 <div style={{

@@ -37,16 +37,15 @@ export const JournalView: React.FC = () => {
     const [tradeToDelete, setTradeToDelete] = useState<Trade | null>(null);
     const [moodToEdit, setMoodToEdit] = useState<DailyMood | null>(null);
 
+    const todayDateStr = format(new Date(), 'yyyy-MM-dd');
+    const hasLoggedToday = moods ? moods.some(m => m.date === todayDateStr) : false;
+
     // Auto Daily Mood Logic
     React.useEffect(() => {
         if (!activeJournalId || !settings?.enableMoodTracker || !moods) return;
 
-        const today = format(new Date(), 'yyyy-MM-dd');
-        // Check if there is already a mood for today
-        const hasLoggedToday = moods.some(m => m.date === today);
-
         // Check local storage to prevent harassing them in a single session if they closed it today
-        const sessionKey = `mood_prompt_suppressed_${today}`;
+        const sessionKey = `mood_prompt_suppressed_${todayDateStr}`;
         const hasSuppressed = sessionStorage.getItem(sessionKey);
 
         if (!hasLoggedToday && !hasSuppressed) {
@@ -131,15 +130,14 @@ export const JournalView: React.FC = () => {
                     <Button variant="ghost" icon={<Download size={18} />} onClick={handleExportCSV}>
                         Export Trades
                     </Button>
-                    {activeTab === 'Mood Tracker' ? (
-                        <Button icon={<Activity size={18} />} onClick={() => setIsMoodModalOpen(true)}>
+                    {!hasLoggedToday && (
+                        <Button variant="secondary" icon={<Activity size={18} />} onClick={() => setIsMoodModalOpen(true)}>
                             Log Mood
                         </Button>
-                    ) : (
-                        <Button icon={<Plus size={18} />} onClick={() => setIsAddModalOpen(true)}>
-                            Add Trade
-                        </Button>
                     )}
+                    <Button icon={<Plus size={18} />} onClick={() => setIsAddModalOpen(true)}>
+                        Add Trade
+                    </Button>
                 </div>
             </div>
 
