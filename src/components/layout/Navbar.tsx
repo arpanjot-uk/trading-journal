@@ -1,16 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LineChart, Settings, Moon, Sun, BookOpen, LayoutDashboard, Calendar, Plus } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { format } from 'date-fns';
+import { db } from '../../db/db';
+import { LineChart, Settings, Moon, Sun, BookOpen, LayoutDashboard, Calendar, Plus, Activity } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 import { AddTradeModal } from '../AddTradeModal';
+import { DailyMoodModal } from '../DailyMoodModal';
 import { useJournalContext } from '../../context/JournalContext';
 
 export const Navbar: React.FC = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
+    const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
     const [theme, setTheme] = useState('dark');
     const location = useLocation();
     const { activeJournalId } = useJournalContext();
+
+    const todayDateStr = format(new Date(), 'yyyy-MM-dd');
+    const settings = useLiveQuery(() => db.settings.toCollection().first());
+    const hasLoggedToday = useLiveQuery(async () => {
+        if (!activeJournalId) return true; // Assume true to hide if no journal
+        const todayMood = await db.dailyMoods.where({ journalId: activeJournalId, date: todayDateStr }).first();
+        return !!todayMood;
+    }, [activeJournalId, todayDateStr]);
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -53,28 +66,51 @@ export const Navbar: React.FC = () => {
             </Link>
 
             {activeJournalId ? (
-                <button
-                    className="flex-center hover-effect"
-                    style={{
-                        background: 'var(--accent-primary)',
-                        color: 'white',
-                        padding: '0.75rem 1rem',
-                        borderRadius: 'var(--radius-md)',
-                        gap: '0.5rem',
-                        fontWeight: 600,
-                        marginBottom: '2rem',
-                        display: 'flex',
-                        border: 'none',
-                        cursor: 'pointer',
-                        width: '100%',
-                        transition: 'var(--transition-fast)',
-                        boxShadow: '0 4px 14px 0 rgba(59, 130, 246, 0.4)',
-                    }}
-                    onClick={() => setIsAddTradeOpen(true)}
-                >
-                    <Plus size={20} />
-                    <span>Add Trade</span>
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
+                    <button
+                        className="flex-center hover-effect"
+                        style={{
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            padding: '0.75rem 1rem',
+                            borderRadius: 'var(--radius-md)',
+                            gap: '0.5rem',
+                            fontWeight: 600,
+                            display: 'flex',
+                            border: 'none',
+                            cursor: 'pointer',
+                            width: '100%',
+                            transition: 'var(--transition-fast)',
+                            boxShadow: '0 4px 14px 0 rgba(59, 130, 246, 0.4)',
+                        }}
+                        onClick={() => setIsAddTradeOpen(true)}
+                    >
+                        <Plus size={20} />
+                        <span>Add Trade</span>
+                    </button>
+                    {(!hasLoggedToday && settings?.enableMoodTracker) && (
+                        <button
+                            className="flex-center hover-effect"
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid var(--accent-primary)',
+                                color: 'var(--accent-primary)',
+                                padding: '0.75rem 1rem',
+                                borderRadius: 'var(--radius-md)',
+                                gap: '0.5rem',
+                                fontWeight: 600,
+                                display: 'flex',
+                                cursor: 'pointer',
+                                width: '100%',
+                                transition: 'var(--transition-fast)'
+                            }}
+                            onClick={() => setIsMoodModalOpen(true)}
+                        >
+                            <Activity size={20} />
+                            <span>Log Mood</span>
+                        </button>
+                    )}
+                </div>
             ) : null}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
@@ -129,6 +165,13 @@ export const Navbar: React.FC = () => {
 
             <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
             <AddTradeModal isOpen={isAddTradeOpen} onClose={() => setIsAddTradeOpen(false)} />
+            {activeJournalId && (
+                <DailyMoodModal
+                    isOpen={isMoodModalOpen}
+                    onClose={() => setIsMoodModalOpen(false)}
+                    journalId={activeJournalId}
+                />
+            )}
         </nav>
     );
 };

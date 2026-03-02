@@ -5,6 +5,7 @@ import type { DailyMood } from '../db/db';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
+import { Frown, Angry, Meh, Smile, SmilePlus, Zap, Activity, Moon, Coffee, Dumbbell, Utensils } from 'lucide-react';
 
 interface DailyMoodModalProps {
     isOpen: boolean;
@@ -99,16 +100,16 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
     };
 
     const faces = [
-        { score: 1, emoji: '😡', color: '#EF4444', label: 'Terrible' }, // Red
-        { score: 2, emoji: '😰', color: '#F97316', label: 'Bad' },      // Orange
-        { score: 3, emoji: '😐', color: '#EAB308', label: 'Neutral' },  // Yellow
-        { score: 4, emoji: '😎', color: '#84CC16', label: 'Good' },     // Light Green
-        { score: 5, emoji: '🤩', color: '#22C55E', label: 'Excellent' } // Green
+        { score: 1, icon: <Angry size={40} />, color: '#EF4444', label: 'Terrible' }, // Red
+        { score: 2, icon: <Frown size={40} />, color: '#F97316', label: 'Bad' },      // Orange
+        { score: 3, icon: <Meh size={40} />, color: '#EAB308', label: 'Neutral' },  // Yellow
+        { score: 4, icon: <Smile size={40} />, color: '#84CC16', label: 'Good' },     // Light Green
+        { score: 5, icon: <SmilePlus size={40} />, color: '#22C55E', label: 'Excellent' } // Green
     ];
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="How's your mood?" width="550px">
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <Modal isOpen={isOpen} onClose={onClose} title="How's your mood?" width="600px">
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
 
                 {/* Mood Face Selector */}
                 <div style={{
@@ -140,129 +141,138 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
                                     alignItems: 'center',
                                     transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                                     cursor: 'pointer',
-                                    filter: isSelected ? 'none' : 'grayscale(0.8) opacity(0.6)',
+                                    filter: isSelected ? 'none' : 'grayscale(0.8) opacity(0.5)',
                                     boxShadow: isSelected ? `0 0 20px ${face.color}40` : 'none',
+                                    color: isSelected ? face.color : 'var(--text-secondary)'
                                 }}
                             >
-                                {face.emoji}
+                                {face.icon}
                             </button>
                         );
                     })}
                 </div>
 
-                {/* Lifestyle Metrics */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                {/* Energy & Stress Section - Full Width Sliders */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '2rem', borderBottom: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Vitals</h3>
 
-                    {/* Energy & Stress Sliders */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div className="flex-between">
-                                <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>⚡ Energy Level</label>
-                                <span style={{ fontSize: '0.875rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{energyLevel} / 100</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="1"
-                                max="100"
-                                value={energyLevel}
-                                onChange={e => setEnergyLevel(Number(e.target.value))}
-                                style={{ width: '100%', accentColor: '#EAB308' }}
-                            />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div className="flex-between">
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}><Zap size={16} className="text-muted" /> Energy Level</label>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{energyLevel} / 100</span>
                         </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div className="flex-between">
-                                <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>💢 Stress Level</label>
-                                <span style={{ fontSize: '0.875rem', color: 'var(--loss-color)', fontWeight: 600 }}>{stressLevel} / 100</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="1"
-                                max="100"
-                                value={stressLevel}
-                                onChange={e => setStressLevel(Number(e.target.value))}
-                                style={{ width: '100%', accentColor: '#EF4444' }}
-                            />
-                        </div>
+                        <input
+                            type="range"
+                            min="1"
+                            max="100"
+                            value={energyLevel}
+                            onChange={e => setEnergyLevel(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: '#EAB308' }}
+                        />
                     </div>
 
-                    {/* Numeric & Dropdown Metrics */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <Input
-                            type="number"
-                            step="0.5"
-                            label="Sleep (Hours)"
-                            placeholder="e.g. 7.5"
-                            value={sleepHours}
-                            onChange={e => setSleepHours(e.target.value !== '' ? Number(e.target.value) : '')}
-                        />
-
-                        <Select
-                            label="Diet / Junk Food"
-                            value={dietScore}
-                            onChange={e => setDietScore(e.target.value)}
-                            options={[
-                                { label: 'Clean Eating', value: 'Clean' },
-                                { label: 'A Little Junk', value: 'A Little Junk' },
-                                { label: 'Moderate Junk', value: 'Moderate Junk' },
-                                { label: 'Heavy Junk', value: 'Heavy Junk' }
-                            ]}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div className="flex-between">
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}><Activity size={16} className="text-muted" /> Stress Level</label>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--loss-color)', fontWeight: 600 }}>{stressLevel} / 100</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="1"
+                            max="100"
+                            value={stressLevel}
+                            onChange={e => setStressLevel(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: '#EF4444' }}
                         />
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    <Select
-                        label="Caffeine Intake"
-                        value={caffeineIntake}
-                        onChange={e => setCaffeineIntake(e.target.value)}
-                        options={[
-                            { label: 'None', value: 'None' },
-                            { label: '1-2 cups', value: '1-2 cups' },
-                            { label: '3-4 cups', value: '3-4 cups' },
-                            { label: '5+ cups', value: '5+ cups' }
-                        ]}
-                    />
+                {/* Habits & Lifestyle Section - Grid Layout */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '2rem', borderBottom: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Lifestyle Factors</h3>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Exercised Today?</label>
-                        <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
-                            <Button
-                                type="button"
-                                variant={exercised ? 'primary' : 'secondary'}
-                                onClick={() => setExercised(true)}
-                                style={{ flex: 1, background: exercised ? 'var(--win-color)' : '', color: exercised ? '#fff' : '' }}
-                            >
-                                Yes
-                            </Button>
-                            <Button
-                                type="button"
-                                variant={!exercised ? 'danger' : 'secondary'}
-                                onClick={() => setExercised(false)}
-                                style={{ flex: 1 }}
-                            >
-                                No
-                            </Button>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+
+                        {/* Column 1 */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <Input
+                                type="number"
+                                step="0.5"
+                                label={<span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Moon size={16} className="text-muted" /> Sleep (Hours)</span>}
+                                placeholder="e.g. 7.5"
+                                value={sleepHours}
+                                onChange={e => setSleepHours(e.target.value !== '' ? Number(e.target.value) : '')}
+                            />
+
+                            <Select
+                                label={<span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Utensils size={16} className="text-muted" /> Diet / Junk Food</span>}
+                                value={dietScore}
+                                onChange={e => setDietScore(e.target.value)}
+                                options={[
+                                    { label: 'Clean Eating', value: 'Clean' },
+                                    { label: 'A Little Junk', value: 'A Little Junk' },
+                                    { label: 'Moderate Junk', value: 'Moderate Junk' },
+                                    { label: 'Heavy Junk', value: 'Heavy Junk' }
+                                ]}
+                            />
+                        </div>
+
+                        {/* Column 2 */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <Select
+                                label={<span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Coffee size={16} className="text-muted" /> Caffeine Intake</span>}
+                                value={caffeineIntake}
+                                onChange={e => setCaffeineIntake(e.target.value)}
+                                options={[
+                                    { label: 'None', value: 'None' },
+                                    { label: '1-2 cups', value: '1-2 cups' },
+                                    { label: '3-4 cups', value: '3-4 cups' },
+                                    { label: '5+ cups', value: '5+ cups' }
+                                ]}
+                            />
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}><Dumbbell size={16} className="text-muted" /> Exercised Today?</label>
+                                <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
+                                    <Button
+                                        type="button"
+                                        variant={exercised ? 'primary' : 'secondary'}
+                                        onClick={() => setExercised(true)}
+                                        style={{ flex: 1, background: exercised ? 'var(--win-color)' : '', color: exercised ? '#fff' : '', padding: '0.6rem 0' }}
+                                    >
+                                        Yes
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={!exercised ? 'danger' : 'secondary'}
+                                        onClick={() => setExercised(false)}
+                                        style={{ flex: 1, padding: '0.6rem 0' }}
+                                    >
+                                        No
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Additional Note */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Note</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Note</label>
                     <textarea
                         className="input-base"
                         rows={3}
                         value={notes}
                         onChange={e => setNotes(e.target.value)}
                         placeholder="Today was a great day! Everything went smoothly..."
+                        style={{ padding: '0.8rem', borderRadius: 'var(--radius-sm)' }}
                     />
                 </div>
 
                 {/* Footer Action */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                    <Button type="submit" disabled={moodScore === 0}>
-                        Save Log
+                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '1.5rem' }}>
+                    <Button type="submit" disabled={moodScore === 0} style={{ padding: '0.8rem 2rem', fontSize: '1rem' }}>
+                        Save Daily Log
                     </Button>
                 </div>
             </form>

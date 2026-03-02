@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
-import { Plus, Edit2, Trash2, BookOpen, Download, Activity, FileText } from 'lucide-react';
+import { Plus, Edit2, Trash2, BookOpen, Download, Activity, FileText, Frown, Angry, Meh, Smile, SmilePlus, Zap, Moon, Coffee, Dumbbell, Utensils } from 'lucide-react';
 import { db, type Trade, type DailyMood } from '../db/db';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -253,11 +253,11 @@ export const JournalView: React.FC = () => {
                     {moods && moods.length > 0 ? (
                         moods.map(mood => {
                             const faces = [
-                                { score: 1, emoji: '😡', color: '#EF4444' },
-                                { score: 2, emoji: '😰', color: '#F97316' },
-                                { score: 3, emoji: '😐', color: '#EAB308' },
-                                { score: 4, emoji: '😎', color: '#84CC16' },
-                                { score: 5, emoji: '🤩', color: '#22C55E' }
+                                { score: 1, icon: <Angry size={30} />, color: '#EF4444' },
+                                { score: 2, icon: <Frown size={30} />, color: '#F97316' },
+                                { score: 3, icon: <Meh size={30} />, color: '#EAB308' },
+                                { score: 4, icon: <Smile size={30} />, color: '#84CC16' },
+                                { score: 5, icon: <SmilePlus size={30} />, color: '#22C55E' }
                             ];
                             const face = faces.find(f => f.score === mood.moodScore);
 
@@ -284,31 +284,32 @@ export const JournalView: React.FC = () => {
                                             justifyContent: 'center',
                                             background: `${face?.color}33`,
                                             borderRadius: '50%',
-                                            border: `2px solid ${face?.color}`
+                                            border: `2px solid ${face?.color}`,
+                                            color: face?.color
                                         }}>
-                                            {face?.emoji}
+                                            {face?.icon}
                                         </div>
                                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <span style={{ fontSize: '0.8rem', background: '#EAB30833', color: '#EAB308', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
-                                                    ⚡ Energy {mood.energyLevel}
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.8rem', background: '#EAB30833', color: '#EAB308', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
+                                                    <Zap size={14} /> Energy {mood.energyLevel}
                                                 </span>
-                                                <span style={{ fontSize: '0.8rem', background: '#EF444433', color: '#EF4444', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
-                                                    💢 Stress {mood.stressLevel}
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.8rem', background: '#EF444433', color: '#EF4444', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
+                                                    <Activity size={14} /> Stress {mood.stressLevel}
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                                <span style={{ fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                                                    🌙 {mood.sleepHours} hrs
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+                                                    <Moon size={12} /> {mood.sleepHours} hrs
                                                 </span>
-                                                <span style={{ fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                                                    ☕ {mood.caffeineIntake}
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+                                                    <Coffee size={12} /> {mood.caffeineIntake}
                                                 </span>
-                                                <span style={{ fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                                                    🏃 {mood.exercised ? 'Yes' : 'No'}
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+                                                    <Dumbbell size={12} /> {mood.exercised ? 'Yes' : 'No'}
                                                 </span>
-                                                <span style={{ fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                                                    🍔 {mood.dietScore}
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+                                                    <Utensils size={12} /> {mood.dietScore}
                                                 </span>
                                             </div>
                                         </div>
