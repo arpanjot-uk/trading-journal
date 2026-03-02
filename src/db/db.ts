@@ -26,7 +26,7 @@ export interface Trade {
   timeframe: string; // e.g. "5m", "15m", "1H"
   pair: string;
   strategy: string;
-  checklistAnswers?: Record<string, string>; // e.g. "Conviction Level": "High"
+  checklistAnswers?: Record<string, any>; // e.g. "Conviction Level": true
   direction: 'Buy' | 'Sell';
   tradeNumber: number; // Trade number of the day
   lots: number;

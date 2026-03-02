@@ -41,7 +41,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
     const [screenshotUrl, setScreenshotUrl] = useState('');
     const [emotionNote, setEmotionNote] = useState('');
     const [technicalNote, setTechnicalNote] = useState('');
-    const [checklistAnswers, setChecklistAnswers] = useState<Record<string, string>>({});
+    const [checklistAnswers, setChecklistAnswers] = useState<Record<string, any>>({});
 
     const timeframes = ['1m', '3m', '5m', '15m', '30m', '1H', '4H', 'Daily', 'Weekly'];
 
@@ -157,7 +157,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
 
     const activeStrategy: StrategyDefinition | undefined = settings?.strategies.find(s => s.name === strategy);
 
-    const handleChecklistChange = (question: string, answer: string) => {
+    const handleChecklistChange = (question: string, answer: any) => {
         setChecklistAnswers(prev => ({ ...prev, [question]: answer }));
     };
 
@@ -216,13 +216,18 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             {/* Step Indicator */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
                 {[1, 2, 3].map(s => (
-                    <div key={s} style={{
-                        flex: 1,
-                        height: '4px',
-                        borderRadius: '2px',
-                        background: s <= step ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
-                        transition: 'var(--transition-fast)'
-                    }} />
+                    <div
+                        key={s}
+                        onClick={() => setStep(s as 1 | 2 | 3)}
+                        style={{
+                            flex: 1,
+                            height: '4px',
+                            borderRadius: '2px',
+                            background: s <= step ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
+                            transition: 'var(--transition-fast)',
+                            cursor: 'pointer'
+                        }}
+                    />
                 ))}
             </div>
 
@@ -291,14 +296,23 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                                             <h5 className="text-secondary" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>{section.section}</h5>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingLeft: '0.5rem', borderLeft: '2px solid var(--border-color)' }}>
                                                 {section.questions.map((q, qIdx) => (
-                                                    <div key={qIdx} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <label style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{q}</label>
-                                                        <Input
-                                                            placeholder="Your answer..."
-                                                            value={checklistAnswers[q] || ''}
-                                                            onChange={(e) => handleChecklistChange(q, e.target.value)}
-                                                            style={{ marginBottom: 0, padding: '0.5rem', fontSize: '0.875rem' }}
+                                                    <div key={qIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            id={`checklist-${sIdx}-${qIdx}`}
+                                                            checked={!!checklistAnswers[q]}
+                                                            onChange={(e) => handleChecklistChange(q, e.target.checked)}
+                                                            style={{
+                                                                width: '16px',
+                                                                height: '16px',
+                                                                accentColor: 'var(--accent-primary)',
+                                                                cursor: 'pointer',
+                                                                marginTop: '0.15rem'
+                                                            }}
                                                         />
+                                                        <label htmlFor={`checklist-${sIdx}-${qIdx}`} style={{ fontSize: '0.875rem', color: 'var(--text-primary)', cursor: 'pointer', margin: 0, lineHeight: 1.4 }}>
+                                                            {q}
+                                                        </label>
                                                     </div>
                                                 ))}
                                             </div>
