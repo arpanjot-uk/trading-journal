@@ -460,11 +460,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                         { value: '$', label: '$' },
                                     ]}
                                     fullWidth={false}
-                                    style={{ marginBottom: 0, width: 110 }}
+                                    style={{ marginBottom: 0, width: 120 }}
                                 />
-                                <Button type="submit" size="sm" icon={<Plus size={15} />} style={{ marginBottom: 0, flexShrink: 0, alignSelf: 'flex-end', height: 42 }}>
-                                    Add
-                                </Button>
+                                <div style={{ alignSelf: 'flex-end', flexShrink: 0 }}>
+                                    <Button type="submit" size="sm" icon={<Plus size={15} />}>
+                                        Add
+                                    </Button>
+                                </div>
                             </div>
                         </form>
                     </SectionCard>

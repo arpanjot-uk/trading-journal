@@ -11,6 +11,7 @@ export const Input: React.FC<InputProps> = ({
     error,
     fullWidth = true,
     className = '',
+    style,          // ← pulled out so it goes to the container, not the <input>
     ...props
 }) => {
     const containerStyle: React.CSSProperties = {
@@ -19,6 +20,7 @@ export const Input: React.FC<InputProps> = ({
         gap: '0.4rem',
         width: fullWidth ? '100%' : 'auto',
         marginBottom: '1rem',
+        ...style,   // ← layout overrides live here (e.g. marginBottom: 0)
     };
 
     const inputStyle: React.CSSProperties = {
@@ -31,6 +33,7 @@ export const Input: React.FC<InputProps> = ({
         transition: 'all var(--transition-fast)',
         fontFamily: 'inherit',
         fontSize: '0.95rem',
+        width: '100%',
     };
 
     return (
@@ -72,6 +75,7 @@ export const Select: React.FC<SelectProps> = ({
     fullWidth = true,
     options,
     className = '',
+    style,          // ← pulled out so it goes to the container, not the <select>
     ...props
 }) => {
     const containerStyle: React.CSSProperties = {
@@ -80,6 +84,7 @@ export const Select: React.FC<SelectProps> = ({
         gap: '0.4rem',
         width: fullWidth ? '100%' : 'auto',
         marginBottom: '1rem',
+        ...style,   // ← layout overrides live here
     };
 
     const inputStyle: React.CSSProperties = {
