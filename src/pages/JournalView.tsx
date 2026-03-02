@@ -83,10 +83,17 @@ export const JournalView: React.FC = () => {
     const handleExportCSV = () => {
         if ((!trades || trades.length === 0) && (!moods || moods.length === 0)) return;
 
+        // Helper: wrap a value in quotes and escape any internal double-quotes
+        const q = (val: string | number | boolean | undefined | null): string => {
+            if (val === undefined || val === null) return '""';
+            return `"${String(val).replace(/"/g, '""')}"`;
+        };
+
         const headers = [
-            'Date', 'Time', 'Pair', 'Direction', 'Lots', 'Strategy', 'Timeframe', 'SL', 'TP', 'Outcome', 'PnL', 'Duration (m)', 'Screenshot URL',
-            'Mood Score', 'Energy Level', 'Stress Level', 'Sleep (hrs)', 'Diet Setup', 'Caffeine Intake', 'Exercised', 'Daily Journal Notes'
-        ];
+            'Date', 'Time', 'Pair', 'Direction', 'Lots', 'Strategy', 'Timeframe',
+            'SL', 'TP', 'RR', 'Outcome', 'Gross PnL', 'Net PnL', 'Duration (m)', 'TradingView Link', 'Screenshot URL',
+            'Mood Score', 'Energy Level', 'Stress Level', 'Sleep (hrs)', 'Diet', 'Caffeine', 'Exercised', 'Daily Notes'
+        ].map(h => q(h));
 
         const rows: string[][] = [];
 
@@ -103,47 +110,51 @@ export const JournalView: React.FC = () => {
             const dayMood = moods?.find(m => m.date === dateStr);
 
             const moodCols = [
-                dayMood ? dayMood.moodScore.toString() : '',
-                dayMood ? dayMood.energyLevel.toString() : '',
-                dayMood ? dayMood.stressLevel.toString() : '',
-                dayMood ? dayMood.sleepHours?.toString() || '' : '',
-                dayMood ? `"${dayMood.dietScore}"` : '',
-                dayMood ? `"${dayMood.caffeineIntake}"` : '',
-                dayMood ? (dayMood.exercised ? 'Yes' : 'No') : '',
-                dayMood && dayMood.notes ? `"${dayMood.notes.replace(/"/g, '""')}"` : '' // Escape quotes
+                q(dayMood?.moodScore ?? ''),
+                q(dayMood?.energyLevel ?? ''),
+                q(dayMood?.stressLevel ?? ''),
+                q(dayMood?.sleepHours ?? ''),
+                q(dayMood?.dietScore ?? ''),
+                q(dayMood?.caffeineIntake ?? ''),
+                q(dayMood ? (dayMood.exercised ? 'Yes' : 'No') : ''),
+                q(dayMood?.notes ?? '')
             ];
 
             if (dayTrades.length > 0) {
                 dayTrades.forEach(t => {
                     rows.push([
-                        dateStr,
-                        t.openDate ? format(new Date(t.openDate), 'HH:mm') : '',
-                        t.pair || '',
-                        t.direction || '',
-                        t.lots ? t.lots.toFixed(2) : '',
-                        t.strategy || '',
-                        t.timeframe || '',
-                        t.sl ? t.sl.toString() : '',
-                        t.tp ? t.tp.toString() : '',
-                        t.result || '',
-                        t.netPnl ? t.netPnl.toFixed(2) : '0.00',
-                        t.duration ? t.duration.toString() : '0',
-                        t.screenshotUrl ? `"${t.screenshotUrl}"` : '',
+                        q(dateStr),
+                        q(t.openDate ? format(new Date(t.openDate), 'HH:mm') : ''),
+                        q(t.pair),
+                        q(t.direction),
+                        q(t.lots ? t.lots.toFixed(2) : ''),
+                        q(t.strategy),
+                        q(t.timeframe),
+                        q(t.sl ? t.sl.toString() : ''),
+                        q(t.tp ? t.tp.toString() : ''),
+                        q(t.rr ? t.rr.toString() : ''),
+                        q(t.result),
+                        q(t.pnl ? t.pnl.toFixed(2) : '0.00'),
+                        q(t.netPnl ? t.netPnl.toFixed(2) : '0.00'),
+                        q(t.duration ? t.duration.toString() : '0'),
+                        q(t.tvLink ?? ''),
+                        q(t.screenshotUrl ?? ''),
                         ...moodCols
                     ]);
                 });
             } else {
-                // Mood only, no trades
+                // Mood-only row
                 rows.push([
-                    dateStr,
-                    '', '', '', '', '', '', '', '', '', '', '', '',
+                    q(dateStr),
+                    q(''), q(''), q(''), q(''), q(''), q(''),
+                    q(''), q(''), q(''), q(''), q(''), q(''), q(''), q(''), q(''),
                     ...moodCols
                 ]);
             }
         });
 
         const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8' }); // BOM for Excel
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;

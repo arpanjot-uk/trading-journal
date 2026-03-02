@@ -236,8 +236,8 @@ export const Dashboard: React.FC = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                             <div className="flex-between"><span className="text-secondary">Profit Factor:</span> <span>{stats.profitFactor.toFixed(2)}</span></div>
                             <div className="flex-between"><span className="text-secondary">Expectancy:</span> <span>{formatMoney(stats.expectancy)}</span></div>
-                            <div className="flex-between"><span className="text-secondary">Gross Profit:</span> <span className="text-win">{formatMoney(stats.totalGrossPnl > 0 ? stats.totalGrossPnl : 0)}</span></div>
-                            <div className="flex-between"><span className="text-secondary">Gross Loss:</span> <span className="text-loss">{formatMoney(stats.totalGrossPnl < 0 ? stats.totalGrossPnl : 0)}</span></div>
+                            <div className="flex-between"><span className="text-secondary">Gross Profit:</span> <span className="text-win">{formatMoney(stats.grossProfit)}</span></div>
+                            <div className="flex-between"><span className="text-secondary">Gross Loss:</span> <span className="text-loss">-{formatMoney(stats.grossLoss)}</span></div>
                         </div>
                     </div>
                 </Card>

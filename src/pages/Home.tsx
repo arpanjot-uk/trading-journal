@@ -91,15 +91,20 @@ export const Home: React.FC = () => {
     const handleDeleteJournal = async () => {
         if (!selectedJournal?.id) return;
         try {
-            // Delete all associated trades first
-            const trades = await db.trades.where('journalId').equals(selectedJournal.id).toArray();
+            const journalId = selectedJournal.id;
+
+            // Delete all associated trades
+            const trades = await db.trades.where('journalId').equals(journalId).toArray();
             const tradeIds = trades.map(t => t.id).filter((id): id is number => id !== undefined);
             await db.trades.bulkDelete(tradeIds);
 
-            // Delete the journal
-            await db.journals.delete(selectedJournal.id);
+            // Delete all associated daily moods (B1 fix: was missing)
+            await db.dailyMoods.where('journalId').equals(journalId).delete();
 
-            if (activeJournalId === selectedJournal.id) {
+            // Delete the journal
+            await db.journals.delete(journalId);
+
+            if (activeJournalId === journalId) {
                 setActiveJournalId(null);
             }
             setIsDeleteModalOpen(false);

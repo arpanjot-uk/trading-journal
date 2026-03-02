@@ -41,7 +41,7 @@ export const Input: React.FC<InputProps> = ({
                 onFocus={(e) => {
                     if (!error) {
                         e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(140, 170, 238, 0.15)';
+                        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.12)';
                         e.currentTarget.style.background = 'var(--bg-primary)';
                     }
                 }}

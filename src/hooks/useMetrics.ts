@@ -55,8 +55,7 @@ export const useMetrics = (journalId: number) => {
         // Add initial balance to growth chart
         if (trades.length > 0) {
             growthData.push({ date: 'Start', equity: balance, profit: 0 });
-            bestTrade = trades[0].netPnl;
-            worstTrade = trades[0].netPnl;
+            // B6 fix: initialize safely from sentinels, not from potentially undefined trades[0].netPnl
         } else {
             bestTrade = 0;
             worstTrade = 0;
@@ -103,7 +102,7 @@ export const useMetrics = (journalId: number) => {
                 // Break loss streak
                 if (currentConsecutiveLosses > maxConsecutiveLosses) {
                     maxConsecutiveLosses = currentConsecutiveLosses;
-                    maxConsecutiveLoss = currentStreakLoss;
+                    maxConsecutiveLoss = Math.abs(currentStreakLoss); // B7 fix: store as positive
                 }
                 currentConsecutiveLosses = 0;
                 currentStreakLoss = 0;
@@ -127,7 +126,7 @@ export const useMetrics = (journalId: number) => {
                 }
                 if (currentConsecutiveLosses > maxConsecutiveLosses) {
                     maxConsecutiveLosses = currentConsecutiveLosses;
-                    maxConsecutiveLoss = currentStreakLoss;
+                    maxConsecutiveLoss = Math.abs(currentStreakLoss); // B7 fix
                 }
                 currentConsecutiveWins = 0;
                 currentStreakProfit = 0;
@@ -184,7 +183,7 @@ export const useMetrics = (journalId: number) => {
         }
         if (currentConsecutiveLosses > maxConsecutiveLosses) {
             maxConsecutiveLosses = currentConsecutiveLosses;
-            maxConsecutiveLoss = currentStreakLoss;
+            maxConsecutiveLoss = Math.abs(currentStreakLoss); // B7 fix
         }
 
         const totalTrades = trades.length;

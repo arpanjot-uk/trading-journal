@@ -15,7 +15,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row' }}>
             <Navbar />
-            <main style={{ flex: 1, padding: '2rem 4rem', height: '100vh', overflowY: 'auto' }}>
+            <main style={{ flex: 1, padding: '2rem 2.5rem', height: '100vh', overflowY: 'auto' }}>
                 <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
                     {children}
                 </div>

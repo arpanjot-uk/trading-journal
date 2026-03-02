@@ -13,19 +13,19 @@ export const Navbar: React.FC = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
     const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
-    const [theme, setTheme] = useState('light');
+    const [theme, setTheme] = useState('dark'); // B5 fix: default matches CSS :root (dark)
     const location = useLocation();
     const { activeJournalId } = useJournalContext();
 
     const todayDateStr = format(new Date(), 'yyyy-MM-dd');
     const hasLoggedToday = useLiveQuery(async () => {
-        if (!activeJournalId) return true; // Assume true to hide if no journal
+        if (!activeJournalId) return true;
         const todayMood = await db.dailyMoods.where({ journalId: activeJournalId, date: todayDateStr }).first();
         return !!todayMood;
     }, [activeJournalId, todayDateStr]);
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         setTheme(savedTheme);
         document.documentElement.setAttribute('data-theme', savedTheme);
     }, []);
@@ -38,82 +38,108 @@ export const Navbar: React.FC = () => {
     };
 
     const navLinks = [
-        { path: '/', label: 'Journals', icon: <BookOpen size={18} /> },
-        { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-        { path: '/calendar', label: 'Calendar', icon: <Calendar size={18} /> },
+        { path: '/', label: 'Journals', icon: <BookOpen size={16} /> },
+        { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+        { path: '/calendar', label: 'Calendar', icon: <Calendar size={16} /> },
     ];
 
+    const navItemBase: React.CSSProperties = {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.625rem',
+        padding: '0.55rem 0.75rem',
+        borderRadius: 'var(--radius-md)',
+        fontWeight: 500,
+        fontSize: '0.875rem',
+        transition: 'all var(--transition-fast)',
+        width: '100%',
+    };
+
     return (
-        <nav className="glass-panel" style={{
-            width: '260px',
-            minWidth: '260px',
-            borderRadius: 0,
-            borderTop: 0,
-            borderBottom: 0,
-            borderLeft: 0,
+        <nav style={{
+            width: '240px',
+            minWidth: '240px',
+            background: 'var(--bg-secondary)',
+            borderRight: '1px solid var(--border-color)',
             display: 'flex',
             flexDirection: 'column',
             height: '100vh',
-            padding: '2rem 1.5rem',
+            padding: '1.5rem 1rem',
             position: 'sticky',
-            top: 0
+            top: 0,
+            transition: 'background-color var(--transition-normal), border-color var(--transition-normal)',
         }}>
-            <Link to="/" className="flex-center" style={{ gap: '0.75rem', color: 'var(--text-primary)', marginBottom: '3rem', justifyContent: 'flex-start' }}>
-                <div style={{ background: 'var(--accent-primary)', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}>
-                    <LineChart size={24} color="#fff" />
+            {/* Logo */}
+            <Link to="/" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.625rem',
+                color: 'var(--text-primary)',
+                marginBottom: '2rem',
+                padding: '0 0.25rem',
+                textDecoration: 'none',
+            }}>
+                <div style={{
+                    background: 'var(--accent-primary)',
+                    padding: '0.45rem',
+                    borderRadius: 'var(--radius-sm)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                }}>
+                    <LineChart size={18} color="#fff" />
                 </div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Arpan Journal</h2>
+                <span style={{ fontSize: '0.95rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Arpan Journal</span>
             </Link>
 
+            {/* CTA Buttons */}
             {activeJournalId ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
                     <button
-                        className="flex-center hover-effect"
-                        style={{
-                            background: 'var(--accent-primary)',
-                            color: 'white',
-                            padding: '0.75rem 1rem',
-                            borderRadius: 'var(--radius-md)',
-                            gap: '0.5rem',
-                            fontWeight: 600,
-                            display: 'flex',
-                            border: 'none',
-                            cursor: 'pointer',
-                            width: '100%',
-                            transition: 'var(--transition-fast)',
-                            boxShadow: '0 4px 14px 0 rgba(59, 130, 246, 0.4)',
-                        }}
                         onClick={() => setIsAddTradeOpen(true)}
+                        style={{
+                            ...navItemBase,
+                            background: 'var(--accent-primary)',
+                            color: '#fff',
+                            fontWeight: 600,
+                            justifyContent: 'center',
+                            border: 'none',
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = 'var(--accent-hover)'}
+                        onMouseOut={e => e.currentTarget.style.background = 'var(--accent-primary)'}
                     >
-                        <Plus size={20} />
+                        <Plus size={16} />
                         <span>Add Trade</span>
                     </button>
                     {!hasLoggedToday && (
                         <button
-                            className="flex-center hover-effect"
-                            style={{
-                                background: 'transparent',
-                                border: '1px solid var(--accent-primary)',
-                                color: 'var(--accent-primary)',
-                                padding: '0.75rem 1rem',
-                                borderRadius: 'var(--radius-md)',
-                                gap: '0.5rem',
-                                fontWeight: 600,
-                                display: 'flex',
-                                cursor: 'pointer',
-                                width: '100%',
-                                transition: 'var(--transition-fast)'
-                            }}
                             onClick={() => setIsMoodModalOpen(true)}
+                            style={{
+                                ...navItemBase,
+                                background: 'transparent',
+                                color: 'var(--text-secondary)',
+                                border: '1px solid var(--border-color)',
+                                justifyContent: 'center',
+                                fontWeight: 500,
+                            }}
+                            onMouseOver={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--accent-primary)'; }}
+                            onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
                         >
-                            <Activity size={20} />
+                            <Activity size={16} />
                             <span>Log Mood</span>
                         </button>
                     )}
                 </div>
             ) : null}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+            {/* Nav label */}
+            <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+                Navigate
+            </span>
+
+            {/* Nav Links */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
                 {navLinks.map((link) => {
                     const isActive = location.pathname === link.path;
                     return (
@@ -121,16 +147,11 @@ export const Navbar: React.FC = () => {
                             key={link.path}
                             to={link.path}
                             style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.75rem',
-                                padding: '0.75rem 1rem',
-                                borderRadius: 'var(--radius-md)',
+                                ...navItemBase,
                                 color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                background: isActive ? 'var(--card-bg-hover)' : 'transparent',
-                                border: isActive ? '1px solid var(--border-color)' : '1px solid transparent',
-                                fontWeight: isActive ? 600 : 500,
-                                transition: 'all var(--transition-fast)'
+                                background: isActive ? 'var(--bg-tertiary)' : 'transparent',
+                                borderLeft: isActive ? `2px solid var(--accent-primary)` : '2px solid transparent',
+                                paddingLeft: '0.625rem',
                             }}
                             onMouseOver={e => !isActive && (e.currentTarget.style.color = 'var(--text-primary)')}
                             onMouseOut={e => !isActive && (e.currentTarget.style.color = 'var(--text-secondary)')}
@@ -142,23 +163,24 @@ export const Navbar: React.FC = () => {
                 })}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
+            {/* Footer actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                 <button
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', color: 'var(--text-secondary)', borderRadius: 'var(--radius-md)', transition: 'var(--transition-fast)', textAlign: 'left', width: '100%' }}
-                    onMouseOver={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--card-bg-hover)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
+                    style={{ ...navItemBase, color: 'var(--text-secondary)', border: 'none' }}
+                    onMouseOver={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                    onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
                     onClick={toggleTheme}
                 >
-                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                     <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
                 </button>
                 <button
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', color: 'var(--text-secondary)', borderRadius: 'var(--radius-md)', transition: 'var(--transition-fast)', textAlign: 'left', width: '100%' }}
-                    onMouseOver={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--card-bg-hover)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
+                    style={{ ...navItemBase, color: 'var(--text-secondary)', border: 'none' }}
+                    onMouseOver={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                    onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
                     onClick={() => setIsSettingsOpen(true)}
                 >
-                    <Settings size={20} />
+                    <Settings size={16} />
                     <span>Settings</span>
                 </button>
             </div>

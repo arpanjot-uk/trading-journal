@@ -196,15 +196,17 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             return;
         }
 
-        const todayStr = openDate.split('T')[0];
-        const todaysTrades = await db.trades
+        const newDateStr = openDate.split('T')[0];
+        // B2 fix: get ALL trades for the new date, excluding the trade being edited
+        const sameDayTrades = await db.trades
             .where('journalId').equals(journalId)
-            .filter(t => t.openDate.startsWith(todayStr))
+            .filter(t => t.openDate.startsWith(newDateStr) && t.id !== tradeToEdit?.id)
             .toArray();
 
-        // If editing, preserve tradeNumber if it's the same day, else recalculate
-        const isSameDayEdit = tradeToEdit && tradeToEdit.openDate.startsWith(todayStr);
-        const tradeNumber = isSameDayEdit ? tradeToEdit.tradeNumber : todaysTrades.length + 1;
+        // Preserve tradeNumber only if the date hasn't changed
+        const originalDateStr = tradeToEdit?.openDate.split('T')[0];
+        const isSameDayEdit = tradeToEdit && originalDateStr === newDateStr;
+        const tradeNumber = isSameDayEdit ? tradeToEdit.tradeNumber : sameDayTrades.length + 1;
         const durationMin = differenceInMinutes(new Date(closeDate), new Date(openDate));
 
         const newTrade: Trade = {
