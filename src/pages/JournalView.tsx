@@ -80,25 +80,70 @@ export const JournalView: React.FC = () => {
     };
 
     const handleExportCSV = () => {
-        if (!trades || trades.length === 0) return;
+        if ((!trades || trades.length === 0) && (!moods || moods.length === 0)) return;
 
-        const headers = ['Date', 'Pair', 'Direction', 'Lots', 'Strategy', 'RR', 'PnL', 'Duration'];
-        const rows = trades.map(t => [
-            format(new Date(t.openDate), 'yyyy-MM-dd HH:mm'),
-            t.pair,
-            t.direction,
-            t.lots.toFixed(2),
-            t.strategy,
-            t.rr.toString(),
-            t.netPnl.toFixed(2),
-            t.duration.toString()
-        ]);
+        const headers = [
+            'Date', 'Time', 'Pair', 'Direction', 'Lots', 'Strategy', 'Timeframe', 'RR', 'PnL', 'Duration (m)', 'Screenshot URL',
+            'Mood Score', 'Energy Level', 'Stress Level', 'Sleep (hrs)', 'Diet Setup', 'Caffeine Intake', 'Exercised', 'Daily Journal Notes'
+        ];
+
+        const rows: string[][] = [];
+
+        // Find all unique dates across trades and moods
+        const allDates = new Set<string>();
+        trades?.forEach(t => allDates.add(format(new Date(t.openDate), 'yyyy-MM-dd')));
+        moods?.forEach(m => allDates.add(m.date));
+
+        // Sort dates descending
+        const sortedDates = Array.from(allDates).sort((a, b) => b.localeCompare(a));
+
+        sortedDates.forEach(dateStr => {
+            const dayTrades = trades?.filter(t => format(new Date(t.openDate), 'yyyy-MM-dd') === dateStr) || [];
+            const dayMood = moods?.find(m => m.date === dateStr);
+
+            const moodCols = [
+                dayMood ? dayMood.moodScore.toString() : '',
+                dayMood ? dayMood.energyLevel.toString() : '',
+                dayMood ? dayMood.stressLevel.toString() : '',
+                dayMood ? dayMood.sleepHours?.toString() || '' : '',
+                dayMood ? `"${dayMood.dietScore}"` : '',
+                dayMood ? `"${dayMood.caffeineIntake}"` : '',
+                dayMood ? (dayMood.exercised ? 'Yes' : 'No') : '',
+                dayMood && dayMood.notes ? `"${dayMood.notes.replace(/"/g, '""')}"` : '' // Escape quotes
+            ];
+
+            if (dayTrades.length > 0) {
+                dayTrades.forEach(t => {
+                    rows.push([
+                        dateStr,
+                        format(new Date(t.openDate), 'HH:mm'),
+                        t.pair,
+                        t.direction,
+                        t.lots.toFixed(2),
+                        t.strategy,
+                        t.timeframe || '',
+                        t.rr.toString(),
+                        t.netPnl.toFixed(2),
+                        t.duration.toString(),
+                        t.screenshotUrl ? `"${t.screenshotUrl}"` : '',
+                        ...moodCols
+                    ]);
+                });
+            } else {
+                // Mood only, no trades
+                rows.push([
+                    dateStr,
+                    '', '', '', '', '', '', '', '', '', '',
+                    ...moodCols
+                ]);
+            }
+        });
 
         const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `trades_${journal?.name?.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.csv`;
+        link.download = `journal_${journal?.name?.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -128,7 +173,7 @@ export const JournalView: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <Button variant="ghost" icon={<Download size={18} />} onClick={handleExportCSV}>
-                        Export Trades
+                        Export Journal
                     </Button>
                     {!hasLoggedToday && (
                         <Button variant="secondary" icon={<Activity size={18} />} onClick={() => setIsMoodModalOpen(true)}>
@@ -249,85 +294,118 @@ export const JournalView: React.FC = () => {
             )}
 
             {activeTab === 'Mood Tracker' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
-                    {moods && moods.length > 0 ? (
-                        moods.map(mood => {
-                            const faces = [
-                                { score: 1, icon: <Angry size={30} />, color: '#EF4444' },
-                                { score: 2, icon: <Frown size={30} />, color: '#F97316' },
-                                { score: 3, icon: <Meh size={30} />, color: '#EAB308' },
-                                { score: 4, icon: <Smile size={30} />, color: '#84CC16' },
-                                { score: 5, icon: <SmilePlus size={30} />, color: '#22C55E' }
-                            ];
-                            const face = faces.find(f => f.score === mood.moodScore);
+                <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
+                        <thead>
+                            <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mood</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Energy</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Stress</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sleep</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Diet</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Caffeine</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Exercise</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notes</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {moods && moods.length > 0 ? (
+                                moods.map(mood => {
+                                    const faces = [
+                                        { score: 1, icon: <Angry size={20} />, color: '#EF4444' },
+                                        { score: 2, icon: <Frown size={20} />, color: '#F97316' },
+                                        { score: 3, icon: <Meh size={20} />, color: '#EAB308' },
+                                        { score: 4, icon: <Smile size={20} />, color: '#84CC16' },
+                                        { score: 5, icon: <SmilePlus size={20} />, color: '#22C55E' }
+                                    ];
+                                    const face = faces.find(f => f.score === mood.moodScore);
 
-                            return (
-                                <div key={mood.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
-                                    <button
-                                        onClick={() => { setMoodToEdit(mood); setIsMoodModalOpen(true); }}
-                                        style={{ position: 'absolute', top: '1rem', right: '1rem', color: 'var(--text-muted)' }}
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
+                                    return (
+                                        <tr key={mood.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s', background: 'transparent' }} onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                                            <td style={{ padding: '1.25rem 1.5rem', whiteSpace: 'nowrap' }}>
+                                                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{format(new Date(mood.date + 'T00:00:00'), 'MMM dd, yyyy')}</span>
+                                            </td>
 
-                                    <div className="flex-between">
-                                        <span className="text-secondary" style={{ fontWeight: 600 }}>{format(new Date(mood.date + 'T00:00:00'), 'MMM dd, yyyy')}</span>
-                                    </div>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <div style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    background: `${face?.color}22`,
+                                                    color: face?.color,
+                                                    padding: '0.4rem',
+                                                    borderRadius: '50%',
+                                                    border: `1px solid ${face?.color}88`
+                                                }}>
+                                                    {face?.icon}
+                                                </div>
+                                            </td>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <div style={{
-                                            fontSize: '3rem',
-                                            width: '60px',
-                                            height: '60px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            background: `${face?.color}33`,
-                                            borderRadius: '50%',
-                                            border: `2px solid ${face?.color}`,
-                                            color: face?.color
-                                        }}>
-                                            {face?.icon}
-                                        </div>
-                                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.8rem', background: '#EAB30833', color: '#EAB308', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
-                                                    <Zap size={14} /> Energy {mood.energyLevel}
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem', color: '#EAB308', fontWeight: 500 }}>
+                                                    <Zap size={14} /> {mood.energyLevel}
                                                 </span>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.8rem', background: '#EF444433', color: '#EF4444', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
-                                                    <Activity size={14} /> Stress {mood.stressLevel}
-                                                </span>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
-                                                    <Moon size={12} /> {mood.sleepHours} hrs
-                                                </span>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
-                                                    <Coffee size={12} /> {mood.caffeineIntake}
-                                                </span>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
-                                                    <Dumbbell size={12} /> {mood.exercised ? 'Yes' : 'No'}
-                                                </span>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
-                                                    <Utensils size={12} /> {mood.dietScore}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                            </td>
 
-                                    {mood.notes && (
-                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', background: 'var(--bg-primary)', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}>
-                                            "{mood.notes}"
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <div style={{ gridColumn: '1 / -1', padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            No mood logs yet. Logs will automatically be requested once a day if enabled in settings, or you can log manually above.
-                        </div>
-                    )}
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem', color: '#EF4444', fontWeight: 500 }}>
+                                                    <Activity size={14} /> {mood.stressLevel}
+                                                </span>
+                                            </td>
+
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                    <Moon size={14} /> {mood.sleepHours} hrs
+                                                </span>
+                                            </td>
+
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                    <Utensils size={14} /> {mood.dietScore}
+                                                </span>
+                                            </td>
+
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                    <Coffee size={14} /> {mood.caffeineIntake}
+                                                </span>
+                                            </td>
+
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                    <Dumbbell size={14} /> {mood.exercised ? 'Yes' : 'No'}
+                                                </span>
+                                            </td>
+
+                                            <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={mood.notes}>
+                                                {mood.notes || '-'}
+                                            </td>
+
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <button
+                                                    onClick={() => { setMoodToEdit(mood); setIsMoodModalOpen(true); }}
+                                                    style={{ color: 'var(--text-muted)', transition: 'color 0.2s', padding: 0 }}
+                                                    onMouseOver={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                                                    onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                                                    title="Edit Log"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan={10} style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                        No mood logs yet. Logs will automatically be requested once a day if enabled in settings, or you can log manually above.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             )}
 
