@@ -37,6 +37,7 @@ export const JournalView: React.FC = () => {
     const [tradeToDelete, setTradeToDelete] = useState<Trade | null>(null);
     const [moodToEdit, setMoodToEdit] = useState<DailyMood | null>(null);
     const [expandedTradeId, setExpandedTradeId] = useState<number | null>(null);
+    const [sortAsc, setSortAsc] = useState(false); // newest first by default
 
     const todayDateStr = format(new Date(), 'yyyy-MM-dd');
     const hasLoggedToday = moods ? moods.some(m => m.date === todayDateStr) : false;
@@ -233,16 +234,20 @@ export const JournalView: React.FC = () => {
 
             {activeTab === 'Trades' && (
                 <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
                         <thead>
                             <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
-                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date</th>
-                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pair</th>
+                                <th
+                                    onClick={() => setSortAsc(a => !a)}
+                                    style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
+                                    title="Click to toggle sort order"
+                                >
+                                    Date {sortAsc ? '↑' : '↓'}
+                                </th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pair / Dir</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>TF</th>
-                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dir</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lots</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Strategy</th>
-                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Emotions</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>SL</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>TP</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>RR</th>
@@ -254,134 +259,145 @@ export const JournalView: React.FC = () => {
                         </thead>
                         <tbody>
                             {trades && trades.length > 0 ? (
-                                trades.map((trade) => (
-                                    <React.Fragment key={trade.id}>
-                                        <tr style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s', background: 'transparent' }} onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-                                            <td style={{ padding: '1.25rem 1.5rem', whiteSpace: 'nowrap', cursor: 'pointer' }} onClick={() => setExpandedTradeId(prev => prev === trade.id ? null : trade.id!)}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                    {expandedTradeId === trade.id ? <ChevronDown size={16} className="text-muted" /> : <ChevronRight size={16} className="text-muted" />}
-                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{format(new Date(trade.openDate), 'MMM dd, yyyy')}</span>
-                                                        <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.1rem' }}>{format(new Date(trade.openDate), 'HH:mm')}</span>
+                                [...trades]
+                                    .sort((a, b) => sortAsc
+                                        ? new Date(a.openDate).getTime() - new Date(b.openDate).getTime()
+                                        : new Date(b.openDate).getTime() - new Date(a.openDate).getTime()
+                                    )
+                                    .map((trade) => (
+                                        <React.Fragment key={trade.id}>
+                                            <tr style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s', background: 'transparent' }} onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                                                <td style={{ padding: '1.25rem 1.5rem', whiteSpace: 'nowrap', cursor: 'pointer' }} onClick={() => setExpandedTradeId(prev => prev === trade.id ? null : trade.id!)}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                        {expandedTradeId === trade.id ? <ChevronDown size={16} className="text-muted" /> : <ChevronRight size={16} className="text-muted" />}
+                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{format(new Date(trade.openDate), 'MMM dd, yyyy')}</span>
+                                                            <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.1rem' }}>{format(new Date(trade.openDate), 'HH:mm')}</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{trade.pair}</td>
-                                            <td style={{ padding: '1.25rem 1.5rem', fontWeight: 500, color: 'var(--text-secondary)' }}>{trade.timeframe || '-'}</td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
-                                                <span style={{
-                                                    padding: '0.2rem 0.5rem',
-                                                    borderRadius: 'var(--radius-sm)',
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: 700,
-                                                    background: trade.direction === 'Buy' ? 'var(--win-bg)' : 'var(--loss-bg)',
-                                                    color: trade.direction === 'Buy' ? 'var(--win-color)' : 'var(--loss-color)'
-                                                }}>
-                                                    {trade.direction.toUpperCase()}
-                                                </span>
-                                            </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.lots.toFixed(2)}</td>
-                                            <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)' }}>{trade.strategy}</td>
-                                            <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)' }}>
-                                                {typeof trade.notes.emotion === 'object' && trade.notes.emotion.fomo ? (
-                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.2rem', fontSize: '0.7rem', fontWeight: 500 }}>
-                                                        <span title="FOMO">F:{trade.notes.emotion.fomo}</span>
-                                                        <span title="Patience">P:{trade.notes.emotion.patience}</span>
-                                                        <span title="Discipline">D:{trade.notes.emotion.discipline}</span>
-                                                        <span title="Confidence">C:{trade.notes.emotion.confidence}</span>
+                                                </td>
+                                                {/* Pair + Direction combined */}
+                                                <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                                                        <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{trade.pair}</span>
+                                                        <span style={{
+                                                            display: 'inline-block',
+                                                            padding: '0.1rem 0.4rem',
+                                                            borderRadius: 'var(--radius-sm)',
+                                                            fontSize: '0.65rem',
+                                                            fontWeight: 700,
+                                                            background: trade.direction === 'Buy' ? 'var(--win-bg)' : 'var(--loss-bg)',
+                                                            color: trade.direction === 'Buy' ? 'var(--win-color)' : 'var(--loss-color)',
+                                                            alignSelf: 'flex-start'
+                                                        }}>
+                                                            {trade.direction.toUpperCase()}
+                                                        </span>
                                                     </div>
-                                                ) : (
-                                                    <span className="text-muted">-</span>
-                                                )}
-                                            </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.sl > 0 ? trade.sl.toString() : '-'}</td>
-                                            <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.tp > 0 ? trade.tp.toString() : '-'}</td>
-                                            <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--accent-primary)' }}>{trade.rr > 0 ? trade.rr.toString() : '-'}</td>
-                                            <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, fontSize: '0.85rem', color: trade.result === 'Win' ? 'var(--win-color)' : trade.result === 'Loss' ? 'var(--loss-color)' : 'var(--text-secondary)' }}>
-                                                {trade.result}
-                                            </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, fontFamily: 'monospace', fontSize: '0.95rem', color: trade.netPnl > 0 ? 'var(--win-color)' : trade.netPnl < 0 ? 'var(--loss-color)' : 'var(--text-secondary)' }}>
-                                                {trade.netPnl > 0 ? '+' : ''}${trade.netPnl.toFixed(2)}
-                                            </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                                {trade.duration < 60 ? `${trade.duration}m` : `${Math.floor(trade.duration / 60)}h ${trade.duration % 60}m`}
-                                            </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
-                                                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                                    <button
-                                                        onClick={() => openEdit(trade)}
-                                                        style={{ color: 'var(--text-muted)', transition: 'color 0.2s', padding: 0 }}
-                                                        onMouseOver={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                                                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                                                        title="Edit Trade"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openDelete(trade)}
-                                                        style={{ color: 'var(--text-muted)', transition: 'color 0.2s', padding: 0 }}
-                                                        onMouseOver={e => e.currentTarget.style.color = 'var(--loss-color)'}
-                                                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                                                        title="Delete Trade"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        {expandedTradeId === trade.id && (
-                                            <tr style={{ background: 'var(--bg-tertiary)' }}>
-                                                <td colSpan={14} style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
-                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
-                                                        {/* Media links */}
-                                                        {(trade.tvLink || trade.screenshotUrl) && (
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                                <h5 className="text-secondary" style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Media Links</h5>
-                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                                    {trade.tvLink && <a href={trade.tvLink} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>→ TradingView Profile</a>}
-                                                                    {trade.screenshotUrl && <a href={trade.screenshotUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>→ Chart Screenshot</a>}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Checklist */}
-                                                        {trade.checklistAnswers && Object.keys(trade.checklistAnswers).length > 0 && (
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                                <h5 className="text-secondary" style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pre-Trade Checklist</h5>
-                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                                                    {Object.entries(trade.checklistAnswers).map(([q, a]) => (
-                                                                        <div key={q} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.85rem' }}>
-                                                                            <span style={{ color: a ? 'var(--win-color)' : 'var(--loss-color)', marginTop: '2px', fontWeight: 700 }}>{a ? '✓' : '✗'}</span>
-                                                                            <span style={{ color: 'var(--text-primary)' }}>{q}</span>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Notes */}
-                                                        {(trade.notes.technical || (typeof trade.notes.emotion === 'object' ? trade.notes.emotion.text : trade.notes.emotion)) && (
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', gridColumn: '1 / -1', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                                                                {trade.notes.technical && (
-                                                                    <div>
-                                                                        <h5 className="text-secondary" style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Technical Notes</h5>
-                                                                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{trade.notes.technical}</p>
-                                                                    </div>
-                                                                )}
-                                                                {(typeof trade.notes.emotion === 'object' ? trade.notes.emotion.text : trade.notes.emotion) && (
-                                                                    <div>
-                                                                        <h5 className="text-secondary" style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Additional Emotional Notes</h5>
-                                                                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{typeof trade.notes.emotion === 'object' ? trade.notes.emotion.text : trade.notes.emotion}</p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
+                                                </td>
+                                                <td style={{ padding: '1.25rem 1.5rem', fontWeight: 500, color: 'var(--text-secondary)' }}>{trade.timeframe || '-'}</td>
+                                                <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.lots.toFixed(2)}</td>
+                                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)' }}>{trade.strategy}</td>
+                                                <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.sl > 0 ? trade.sl.toString() : '-'}</td>
+                                                <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.tp > 0 ? trade.tp.toString() : '-'}</td>
+                                                <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--accent-primary)' }}>{trade.rr > 0 ? trade.rr.toString() : '-'}</td>
+                                                <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, fontSize: '0.85rem', color: trade.result === 'Win' ? 'var(--win-color)' : trade.result === 'Loss' ? 'var(--loss-color)' : 'var(--text-secondary)' }}>
+                                                    {trade.result}
+                                                </td>
+                                                <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, fontFamily: 'monospace', fontSize: '0.95rem', color: trade.netPnl > 0 ? 'var(--win-color)' : trade.netPnl < 0 ? 'var(--loss-color)' : 'var(--text-secondary)' }}>
+                                                    {trade.netPnl > 0 ? '+' : ''}${trade.netPnl.toFixed(2)}
+                                                </td>
+                                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                                    {trade.duration < 60 ? `${trade.duration}m` : `${Math.floor(trade.duration / 60)}h ${trade.duration % 60}m`}
+                                                </td>
+                                                <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                                        <button
+                                                            onClick={() => openEdit(trade)}
+                                                            style={{ color: 'var(--text-muted)', transition: 'color 0.2s', padding: 0 }}
+                                                            onMouseOver={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                                                            onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                                                            title="Edit Trade"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openDelete(trade)}
+                                                            style={{ color: 'var(--text-muted)', transition: 'color 0.2s', padding: 0 }}
+                                                            onMouseOver={e => e.currentTarget.style.color = 'var(--loss-color)'}
+                                                            onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                                                            title="Delete Trade"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))
+                                            {expandedTradeId === trade.id && (
+                                                <tr style={{ background: 'var(--bg-tertiary)' }}>
+                                                    <td colSpan={12} style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+                                                            {/* Emotion Ratings */}
+                                                            {typeof trade.notes.emotion === 'object' && trade.notes.emotion && trade.notes.emotion.fomo && (
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                                    <h5 className="text-secondary" style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Emotion Ratings</h5>
+                                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontSize: '0.85rem' }}>
+                                                                        <span>FOMO: <strong>{trade.notes.emotion.fomo}/5</strong></span>
+                                                                        <span>Patience: <strong>{trade.notes.emotion.patience}/5</strong></span>
+                                                                        <span>Discipline: <strong>{trade.notes.emotion.discipline}/5</strong></span>
+                                                                        <span>Confidence: <strong>{trade.notes.emotion.confidence}/5</strong></span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Media links */}
+                                                            {(trade.tvLink || trade.screenshotUrl) && (
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                                    <h5 className="text-secondary" style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Media Links</h5>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                                        {trade.tvLink && <a href={trade.tvLink} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>→ TradingView Profile</a>}
+                                                                        {trade.screenshotUrl && <a href={trade.screenshotUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>→ Chart Screenshot</a>}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Checklist */}
+                                                            {trade.checklistAnswers && Object.keys(trade.checklistAnswers).length > 0 && (
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                                    <h5 className="text-secondary" style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pre-Trade Checklist</h5>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                                                        {Object.entries(trade.checklistAnswers).map(([q, a]) => (
+                                                                            <div key={q} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.85rem' }}>
+                                                                                <span style={{ color: a ? 'var(--win-color)' : 'var(--loss-color)', marginTop: '2px', fontWeight: 700 }}>{a ? '✓' : '✗'}</span>
+                                                                                <span style={{ color: 'var(--text-primary)' }}>{q}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Notes */}
+                                                            {(trade.notes.technical || (typeof trade.notes.emotion === 'object' ? trade.notes.emotion.text : trade.notes.emotion)) && (
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', gridColumn: '1 / -1', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                                                    {trade.notes.technical && (
+                                                                        <div>
+                                                                            <h5 className="text-secondary" style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Technical Notes</h5>
+                                                                            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{trade.notes.technical}</p>
+                                                                        </div>
+                                                                    )}
+                                                                    {(typeof trade.notes.emotion === 'object' ? trade.notes.emotion.text : trade.notes.emotion) && (
+                                                                        <div>
+                                                                            <h5 className="text-secondary" style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Emotional Notes</h5>
+                                                                            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{typeof trade.notes.emotion === 'object' ? trade.notes.emotion.text : trade.notes.emotion}</p>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    ))
                             ) : (
                                 <tr>
                                     <td colSpan={13} style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
