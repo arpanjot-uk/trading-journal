@@ -104,6 +104,26 @@ db.version(3).stores({
   });
 });
 
+db.version(4).stores({
+  journals: '++id, name, createdAt, updatedAt',
+  trades: '++id, journalId, [journalId+openDate], openDate, closeDate, pair, strategy, direction, result',
+  settings: '++id',
+  dailyMoods: '++id, &[journalId+date], journalId, date, moodScore'
+}).upgrade(tx => {
+  return tx.table('trades').toCollection().modify(trade => {
+    if (trade.pnl !== undefined && (trade.netPnl === undefined || trade.netPnl === 0) && trade.pnl !== 0) {
+      trade.netPnl = trade.pnl;
+    }
+    if (trade.rr === undefined) {
+      if (trade.tp > 0 && trade.sl > 0) {
+        trade.rr = +(trade.tp / trade.sl).toFixed(2);
+      } else {
+        trade.rr = 0;
+      }
+    }
+  });
+});
+
 export const initializeSettings = async () => {
   const existingSettings = await db.settings.toArray();
   if (existingSettings.length === 0) {

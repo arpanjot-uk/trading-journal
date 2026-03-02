@@ -234,6 +234,7 @@ export const JournalView: React.FC = () => {
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Emotions</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>SL</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>TP</th>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>RR</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outcome</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>PnL</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</th>
@@ -284,6 +285,7 @@ export const JournalView: React.FC = () => {
                                             </td>
                                             <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.sl > 0 ? trade.sl.toString() : '-'}</td>
                                             <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{trade.tp > 0 ? trade.tp.toString() : '-'}</td>
+                                            <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--accent-primary)' }}>{trade.rr > 0 ? trade.rr.toString() : '-'}</td>
                                             <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600, fontSize: '0.85rem', color: trade.result === 'Win' ? 'var(--win-color)' : trade.result === 'Loss' ? 'var(--loss-color)' : 'var(--text-secondary)' }}>
                                                 {trade.result}
                                             </td>
@@ -318,7 +320,7 @@ export const JournalView: React.FC = () => {
                                         </tr>
                                         {expandedTradeId === trade.id && (
                                             <tr style={{ background: 'var(--bg-tertiary)' }}>
-                                                <td colSpan={13} style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+                                                <td colSpan={14} style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
                                                         {/* Media links */}
                                                         {(trade.tvLink || trade.screenshotUrl) && (

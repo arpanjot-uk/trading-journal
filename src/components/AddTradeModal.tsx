@@ -29,11 +29,11 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
     const [direction, setDirection] = useState<'Buy' | 'Sell'>('Buy');
     const [lots, setLots] = useState<number | ''>(1.0);
     const [result, setResult] = useState<TradeResult>('Win');
-    const [rr, setRr] = useState<number | ''>(0);
-    const [sl, setSl] = useState<number | ''>(0);
-    const [tp, setTp] = useState<number | ''>(0);
-    const [pnl, setPnl] = useState<number | ''>(0);
-    const [netPnl, setNetPnl] = useState<number | ''>(0);
+    const [rr, setRr] = useState<number | ''>('');
+    const [sl, setSl] = useState<number | ''>('');
+    const [tp, setTp] = useState<number | ''>('');
+    const [pnl, setPnl] = useState<number | ''>('');
+    const [netPnl, setNetPnl] = useState<number | ''>('');
     const [tvLink, setTvLink] = useState('');
     const [screenshotUrl, setScreenshotUrl] = useState('');
     const [emotionNote, setEmotionNote] = useState('');
@@ -59,11 +59,11 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         setDirection('Buy');
         setLots(1.0);
         setResult('Win');
-        setRr(0);
-        setSl(0);
-        setTp(0);
-        setPnl(0);
-        setNetPnl(0);
+        setRr('');
+        setSl('');
+        setTp('');
+        setPnl('');
+        setNetPnl('');
         setTvLink('');
         setScreenshotUrl('');
         setEmotionNote('');
@@ -132,11 +132,11 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                 setDirection(draft.direction || 'Buy');
                 setLots(draft.lots ?? 1.0);
                 setResult(draft.result || 'Win');
-                setRr(draft.rr ?? 0);
-                setSl(draft.sl ?? 0);
-                setTp(draft.tp ?? 0);
-                setPnl(draft.pnl ?? 0);
-                setNetPnl(draft.netPnl ?? 0);
+                setRr(draft.rr ?? '');
+                setSl(draft.sl ?? '');
+                setTp(draft.tp ?? '');
+                setPnl(draft.pnl ?? '');
+                setNetPnl(draft.netPnl ?? '');
                 setTvLink(draft.tvLink || '');
                 setScreenshotUrl(draft.screenshotUrl || '');
                 setEmotionNote(draft.emotionNote || '');
@@ -154,6 +154,17 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, journalId, journals, settings, tradeToEdit]); // intentionally omitting pair/strategy variables to prevent overwriting user edits
+
+    // Auto-calculate RR
+    useEffect(() => {
+        const slNum = Number(sl);
+        const tpNum = Number(tp);
+        if (slNum > 0 && tpNum > 0) {
+            setRr(+(tpNum / slNum).toFixed(2));
+        } else if (slNum === 0 || tpNum === 0) {
+            setRr('');
+        }
+    }, [sl, tp]);
 
     const handleSaveDraft = () => {
         if (journalId === 0 || tradeToEdit) return; // Don't save drafts when editing
@@ -287,17 +298,18 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                         <Input type="datetime-local" label="Open Date" value={openDate} onChange={e => setOpenDate(e.target.value)} required />
                         <Input type="datetime-local" label="Close Date" value={closeDate} onChange={e => setCloseDate(e.target.value)} required />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem' }}>
                         <Input type="number" step="0.01" label="Lots" value={lots} onChange={e => setLots(Number(e.target.value))} />
                         <Input type="number" step="0.1" label={`SL (${settings?.pairUnits?.[pair] || 'pips'})`} value={sl} onChange={e => setSl(Number(e.target.value))} />
                         <Input type="number" step="0.1" label={`TP (${settings?.pairUnits?.[pair] || 'pips'})`} value={tp} onChange={e => setTp(Number(e.target.value))} />
+                        <Input type="number" step="0.1" label="Risk:Reward" value={rr} onChange={e => setRr(Number(e.target.value))} />
                     </div>
                 </div>
 
                 {/* --- Section 3: Results --- */}
                 <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
                     <h4 className="text-secondary" style={{ marginBottom: '1rem' }}>Financial Result</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                         <Select
                             label="Outcome"
                             value={result}
@@ -308,7 +320,27 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                                 { label: 'Break Even', value: 'Break Even' }
                             ]}
                         />
-                        <Input type="number" step="0.01" label="Gross PnL ($)" value={pnl} onChange={e => setPnl(Number(e.target.value))} />
+                        <Input
+                            type="number"
+                            step="0.01"
+                            label="Gross PnL ($)"
+                            value={pnl}
+                            onChange={e => {
+                                const val = Number(e.target.value);
+                                setPnl(val);
+                                // Auto-fill net pnl if they match or if net pnl is empty
+                                if (netPnl === pnl || netPnl === '' || netPnl === 0) {
+                                    setNetPnl(val);
+                                }
+                            }}
+                        />
+                        <Input
+                            type="number"
+                            step="0.01"
+                            label="Net PnL ($)"
+                            value={netPnl}
+                            onChange={e => setNetPnl(Number(e.target.value))}
+                        />
                     </div>
                 </div>
 

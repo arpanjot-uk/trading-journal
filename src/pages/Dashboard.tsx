@@ -228,10 +228,10 @@ export const Dashboard: React.FC = () => {
                             <div className="flex-between"><span className="text-secondary">Lots:</span> <span>{stats.totalLots.toFixed(2)}</span></div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                            <div className="flex-between"><span className="text-secondary">Longs Won:</span> <span>-</span></div>
-                            <div className="flex-between"><span className="text-secondary">Shorts Won:</span> <span>-</span></div>
-                            <div className="flex-between"><span className="text-secondary">Best Trade ($):</span> <span>-</span></div>
-                            <div className="flex-between"><span className="text-secondary">Worst Trade ($):</span> <span>-</span></div>
+                            <div className="flex-between"><span className="text-secondary">Longs Won:</span> <span>{stats.longWon}</span></div>
+                            <div className="flex-between"><span className="text-secondary">Shorts Won:</span> <span>{stats.shortWon}</span></div>
+                            <div className="flex-between"><span className="text-secondary">Best Trade ($):</span> <span className="text-win">{formatMoney(stats.bestTrade === Number.NEGATIVE_INFINITY ? 0 : stats.bestTrade)}</span></div>
+                            <div className="flex-between"><span className="text-secondary">Worst Trade ($):</span> <span className="text-loss">{formatMoney(stats.worstTrade === Number.POSITIVE_INFINITY ? 0 : stats.worstTrade)}</span></div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                             <div className="flex-between"><span className="text-secondary">Profit Factor:</span> <span>{stats.profitFactor.toFixed(2)}</span></div>
