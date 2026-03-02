@@ -27,6 +27,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
     const [openDate, setOpenDate] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     const [closeDate, setCloseDate] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     const [pair, setPair] = useState('');
+    const [timeframe, setTimeframe] = useState('');
     const [strategy, setStrategy] = useState('');
     const [direction, setDirection] = useState<'Buy' | 'Sell'>('Buy');
     const [lots, setLots] = useState<number | ''>(1.0);
@@ -37,17 +38,22 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
     const [pnl, setPnl] = useState<number | ''>(0);
     const [netPnl, setNetPnl] = useState<number | ''>(0);
     const [tvLink, setTvLink] = useState('');
+    const [screenshotUrl, setScreenshotUrl] = useState('');
     const [emotionNote, setEmotionNote] = useState('');
     const [technicalNote, setTechnicalNote] = useState('');
     const [checklistAnswers, setChecklistAnswers] = useState<Record<string, string>>({});
+
+    const timeframes = ['1m', '3m', '5m', '15m', '30m', '1H', '4H', 'Daily', 'Weekly'];
 
     // Define reset to defaults
     const resetForm = (jId: number, setPairDefault: string, setStratDefault: string) => {
         setStep(1);
         setJournalId(jId);
         setOpenDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+        setOpenDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
         setCloseDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
         setPair(setPairDefault);
+        setTimeframe('15m');
         setStrategy(setStratDefault);
         setDirection('Buy');
         setLots(1.0);
@@ -58,6 +64,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         setPnl(0);
         setNetPnl(0);
         setTvLink('');
+        setScreenshotUrl('');
         setEmotionNote('');
         setTechnicalNote('');
         setChecklistAnswers({});
@@ -73,6 +80,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             setOpenDate(tradeToEdit.openDate);
             setCloseDate(tradeToEdit.closeDate);
             setPair(tradeToEdit.pair);
+            setTimeframe(tradeToEdit.timeframe || '15m');
             setStrategy(tradeToEdit.strategy);
             setDirection(tradeToEdit.direction);
             setLots(tradeToEdit.lots);
@@ -83,6 +91,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             setPnl(tradeToEdit.pnl);
             setNetPnl(tradeToEdit.netPnl);
             setTvLink(tradeToEdit.tvLink || '');
+            setScreenshotUrl(tradeToEdit.screenshotUrl || '');
             setEmotionNote(tradeToEdit.notes.emotion || '');
             setTechnicalNote(tradeToEdit.notes.technical || '');
             setChecklistAnswers(tradeToEdit.checklistAnswers || {});
@@ -103,6 +112,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                 setOpenDate(draft.openDate || format(new Date(), "yyyy-MM-dd'T'HH:mm"));
                 setCloseDate(draft.closeDate || format(new Date(), "yyyy-MM-dd'T'HH:mm"));
                 setPair(draft.pair || (settings.pairs.length > 0 ? settings.pairs[0] : ''));
+                setTimeframe(draft.timeframe || '15m');
                 setStrategy(draft.strategy || (settings.strategies.length > 0 ? settings.strategies[0].name : ''));
                 setDirection(draft.direction || 'Buy');
                 setLots(draft.lots ?? 1.0);
@@ -113,6 +123,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                 setPnl(draft.pnl ?? 0);
                 setNetPnl(draft.netPnl ?? 0);
                 setTvLink(draft.tvLink || '');
+                setScreenshotUrl(draft.screenshotUrl || '');
                 setEmotionNote(draft.emotionNote || '');
                 setTechnicalNote(draft.technicalNote || '');
                 setChecklistAnswers(draft.checklistAnswers || {});
@@ -130,8 +141,8 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
     const handleSaveDraft = () => {
         if (journalId === 0 || tradeToEdit) return; // Don't save drafts when editing
         const draft = {
-            step, openDate, closeDate, pair, strategy, direction, lots, result, rr, sl, tp, pnl, netPnl,
-            tvLink, emotionNote, technicalNote, checklistAnswers
+            step, openDate, closeDate, pair, timeframe, strategy, direction, lots, result, rr, sl, tp, pnl, netPnl,
+            tvLink, screenshotUrl, emotionNote, technicalNote, checklistAnswers
         };
         localStorage.setItem(getDraftKey(journalId), JSON.stringify(draft));
     };
@@ -169,7 +180,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
         const durationMin = differenceInMinutes(new Date(closeDate), new Date(openDate));
 
         const newTrade: Trade = {
-            journalId, openDate, closeDate, pair, strategy, direction,
+            journalId, openDate, closeDate, pair, timeframe, strategy, direction,
             tradeNumber,
             lots: Number(lots) || 0,
             result,
@@ -179,6 +190,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
             pnl: Number(pnl) || 0,
             netPnl: Number(netPnl) || 0,
             tvLink,
+            screenshotUrl,
             notes: { emotion: emotionNote, technical: technicalNote, other: '' },
             duration: durationMin >= 0 ? durationMin : 0,
             checklistAnswers: Object.keys(checklistAnswers).length > 0 ? checklistAnswers : undefined
@@ -238,12 +250,18 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                                     ]}
                                 />
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
                                 <Select
                                     label="Currency Pair"
                                     value={pair}
                                     onChange={e => setPair(e.target.value)}
                                     options={settings ? settings.pairs.map(p => ({ label: p, value: p })) : []}
+                                />
+                                <Select
+                                    label="Timeframe"
+                                    value={timeframe}
+                                    onChange={e => setTimeframe(e.target.value)}
+                                    options={timeframes.map(tf => ({ label: tf, value: tf }))}
                                 />
                                 <Select
                                     label="Strategy / Setup"
@@ -332,7 +350,10 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, t
                     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <div>
                             <h4 className="text-secondary" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Review & Media</h4>
-                            <Input type="url" label="TradingView Chart Link" placeholder="https://www.tradingview.com/x/..." value={tvLink} onChange={e => setTvLink(e.target.value)} />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <Input type="url" label="TradingView Profile Link" placeholder="https://www.tradingview.com/u/..." value={tvLink} onChange={e => setTvLink(e.target.value)} />
+                                <Input type="url" label="Chart Screenshot Link" placeholder="https://www.tradingview.com/x/..." value={screenshotUrl} onChange={e => setScreenshotUrl(e.target.value)} />
+                            </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
                                 <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Technical Notes</label>

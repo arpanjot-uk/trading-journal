@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Wallet, Target, Info } from 'lucide-react';
+import { BookOpen, Wallet, Target, Info } from 'lucide-react';
 import {
     ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     BarChart, Legend, ScatterChart, Scatter, ZAxis, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
@@ -41,9 +41,6 @@ export const Dashboard: React.FC = () => {
         <div>
             <div className="flex-between" style={{ marginBottom: '2rem', marginTop: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/journal/${journal.id}`)} style={{ padding: '0.4rem' }}>
-                        <ArrowLeft size={20} />
-                    </Button>
                     <h1 style={{ margin: 0, fontSize: '2rem' }}>Metrics: {journal.name}</h1>
                 </div>
             </div>

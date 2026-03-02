@@ -269,6 +269,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         </p>
                     </div>
 
+                    {/* Feature Toggles */}
+                    <div>
+                        <h4 className="flex-between text-secondary" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                            Features & Preferences
+                        </h4>
+                        <div className="flex-between glass-panel" style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)' }}>
+                            <div>
+                                <h4 style={{ margin: 0 }}>Daily Mood Tracker</h4>
+                                <span className="text-muted" style={{ fontSize: '0.85rem' }}>Automatically ask for daily lifestyle metrics (sleep, mood, diet, etc.)</span>
+                            </div>
+                            <Button
+                                variant={settings?.enableMoodTracker ? 'primary' : 'secondary'}
+                                onClick={async () => {
+                                    if (!settings) return;
+                                    await db.settings.update(settings.id!, { enableMoodTracker: !settings.enableMoodTracker });
+                                }}
+                            >
+                                {settings?.enableMoodTracker ? 'Enabled' : 'Disabled'}
+                            </Button>
+                        </div>
+                    </div>
+
                     {/* Currency Pairs */}
                     <div>
                         <h4 className="flex-between text-secondary" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>

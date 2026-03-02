@@ -23,6 +23,7 @@ export interface Trade {
   journalId: number;
   openDate: string; // ISO string 
   closeDate: string; // ISO string
+  timeframe: string; // e.g. "5m", "15m", "1H"
   pair: string;
   strategy: string;
   checklistAnswers?: Record<string, string>; // e.g. "Conviction Level": "High"
@@ -36,6 +37,7 @@ export interface Trade {
   pnl: number;
   netPnl: number;
   tvLink?: string; // TradingView link
+  screenshotUrl?: string; // Additional or alternative chart screenshot link
   notes: {
     emotion: string;
     technical: string;
@@ -44,23 +46,41 @@ export interface Trade {
   duration: number; // Duration in minutes
 }
 
+export interface DailyMood {
+  id?: number;
+  journalId: number;
+  date: string; // "YYYY-MM-DD"
+  moodScore: number; // 1 to 5
+  energyLevel: number; // 1 to 100
+  stressLevel: number; // 1 to 100
+  sleepHours: number;
+  dietScore: string; // e.g., "Clean", "Moderate", "Heavy Junk"
+  caffeineIntake: string; // e.g., "None", "1-2 cups"
+  exercised: boolean;
+  screenTime?: number;
+  notes?: string;
+}
+
 export interface Settings {
   id?: number;
   pairs: string[];
   strategies: StrategyDefinition[];
+  enableMoodTracker: boolean;
 }
 
 const db = new Dexie('TradingJournalDB') as Dexie & {
   journals: EntityTable<Journal, 'id'>;
   trades: EntityTable<Trade, 'id'>;
   settings: EntityTable<Settings, 'id'>;
+  dailyMoods: EntityTable<DailyMood, 'id'>;
 };
 
 // Schema declaration
-db.version(1).stores({
+db.version(2).stores({
   journals: '++id, name, createdAt, updatedAt',
   trades: '++id, journalId, openDate, closeDate, pair, strategy, direction, result',
-  settings: '++id, pairs, strategies'
+  settings: '++id, pairs, strategies, enableMoodTracker',
+  dailyMoods: '++id, journalId, date, moodScore'
 });
 
 export const initializeSettings = async () => {
@@ -68,6 +88,7 @@ export const initializeSettings = async () => {
   if (existingSettings.length === 0) {
     await db.settings.add({
       pairs: ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'US30'],
+      enableMoodTracker: true,
       strategies: [
         {
           name: 'Breakout',
