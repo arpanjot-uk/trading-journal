@@ -33,7 +33,7 @@ export const JournalView: React.FC = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('Advanced');
-    const [activeMainTab, setActiveMainTab] = useState<'Dashboard' | 'Calendar'>('Dashboard');
+    const [activeMainTab, setActiveMainTab] = useState<'Metrics' | 'Calendar' | 'Emotions'>('Metrics');
 
     if (!journal) {
         return <div className="container" style={{ paddingTop: '2rem' }}>Loading Journal...</div>;
@@ -55,16 +55,22 @@ export const JournalView: React.FC = () => {
 
                 <div style={{ display: 'flex', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-round)', padding: '0.25rem' }}>
                     <button
-                        onClick={() => setActiveMainTab('Dashboard')}
-                        style={{ padding: '0.4rem 1.5rem', borderRadius: 'var(--radius-round)', background: activeMainTab === 'Dashboard' ? 'var(--accent-primary)' : 'transparent', color: activeMainTab === 'Dashboard' ? '#fff' : 'var(--text-secondary)', fontWeight: 500, transition: 'var(--transition-fast)' }}
+                        onClick={() => setActiveMainTab('Metrics')}
+                        style={{ padding: '0.4rem 1.5rem', borderRadius: 'var(--radius-round)', background: activeMainTab === 'Metrics' ? 'var(--accent-primary)' : 'transparent', color: activeMainTab === 'Metrics' ? '#fff' : 'var(--text-secondary)', fontWeight: 500, transition: 'var(--transition-fast)' }}
                     >
-                        Dashboard
+                        Metrics
                     </button>
                     <button
                         onClick={() => setActiveMainTab('Calendar')}
                         style={{ padding: '0.4rem 1.5rem', borderRadius: 'var(--radius-round)', background: activeMainTab === 'Calendar' ? 'var(--accent-primary)' : 'transparent', color: activeMainTab === 'Calendar' ? '#fff' : 'var(--text-secondary)', fontWeight: 500, transition: 'var(--transition-fast)' }}
                     >
                         Calendar
+                    </button>
+                    <button
+                        onClick={() => setActiveMainTab('Emotions')}
+                        style={{ padding: '0.4rem 1.5rem', borderRadius: 'var(--radius-round)', background: activeMainTab === 'Emotions' ? 'var(--accent-primary)' : 'transparent', color: activeMainTab === 'Emotions' ? '#fff' : 'var(--text-secondary)', fontWeight: 500, transition: 'var(--transition-fast)' }}
+                    >
+                        Emotions
                     </button>
                 </div>
 
@@ -77,6 +83,45 @@ export const JournalView: React.FC = () => {
             {activeMainTab === 'Calendar' && trades ? (
                 <div className="animate-fade-in" style={{ marginBottom: '3rem' }}>
                     <CalendarView trades={trades} />
+                </div>
+            ) : activeMainTab === 'Emotions' && trades ? (
+                <div className="animate-fade-in" style={{ marginBottom: '3rem' }}>
+                    <Card style={{ padding: '2rem' }}>
+                        <h2 style={{ marginBottom: '1.5rem' }}>Emotions & Technical Notes</h2>
+                        {trades.length === 0 ? (
+                            <p className="text-muted text-center" style={{ padding: '3rem 0' }}>No trades logged yet.</p>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                {trades.map(trade => (
+                                    <div key={trade.id} style={{ padding: '1.5rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                        <div className="flex-between" style={{ marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{trade.pair}</span>
+                                                <span className="text-secondary" style={{ fontSize: '0.9rem' }}>{format(new Date(trade.openDate), 'MMM dd, yyyy HH:mm')}</span>
+                                            </div>
+                                            <span style={{ fontWeight: 600, color: trade.netPnl > 0 ? 'var(--win-color)' : trade.netPnl < 0 ? 'var(--loss-color)' : 'var(--text-secondary)' }}>
+                                                {trade.netPnl > 0 ? '+' : ''}${trade.netPnl.toFixed(2)}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                            <div>
+                                                <h4 className="text-secondary" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>Emotional Notes</h4>
+                                                <p style={{ color: trade.notes?.emotion ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                                                    {trade.notes?.emotion || 'No emotional notes recorded.'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-secondary" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>Technical Notes</h4>
+                                                <p style={{ color: trade.notes?.technical ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                                                    {trade.notes?.technical || 'No technical notes recorded.'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
                 </div>
             ) : (
                 <div className="animate-fade-in">
@@ -371,27 +416,31 @@ export const JournalView: React.FC = () => {
                                     </Card>
                                 )}
                             </div>
+                        </div>
+                    ) : null}
 
-                            {/* 3. TRADES LEDGER (Bottom) */}
-                            <h3 style={{ marginBottom: '1rem' }}>Trade History</h3>
-                            <Card padding="none" style={{ overflow: 'hidden' }}>
-                                <div style={{ overflowX: 'auto' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                        <thead>
-                                            <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Date</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Pair</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Dir</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Lots</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Strat</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Duration</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>RR</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Net PnL</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Link</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {trades?.map((trade) => (
+                    <div>
+                        {/* 3. TRADES LEDGER (Bottom) */}
+                        <h3 style={{ marginBottom: '1rem' }}>Trade History</h3>
+                        <Card padding="none" style={{ overflow: 'hidden' }}>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                    <thead>
+                                        <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
+                                            <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Date</th>
+                                            <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Pair</th>
+                                            <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Dir</th>
+                                            <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Lots</th>
+                                            <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Strat</th>
+                                            <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Duration</th>
+                                            <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>RR</th>
+                                            <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Net PnL</th>
+                                            <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Link</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {trades && trades.length > 0 ? (
+                                            trades.map((trade) => (
                                                 <tr key={trade.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                                                     <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}>
                                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -430,54 +479,27 @@ export const JournalView: React.FC = () => {
                                                         )}
                                                     </td>
                                                 </tr>
-                                            ))}
-
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </Card>
-                        </div>
-                    ) : null}
-
-                    {(!stats || !charts || stats.totalTrades === 0) && (
-                        <div>
-                            {/* 3. TRADES LEDGER (Bottom) */}
-                            <h3 style={{ marginBottom: '1rem' }}>Trade History</h3>
-                            <Card padding="none" style={{ overflow: 'hidden' }}>
-                                <div style={{ overflowX: 'auto' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                        <thead>
-                                            <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Date</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Pair</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Dir</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Lots</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Strat</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Duration</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>RR</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Net PnL</th>
-                                                <th style={{ padding: '1rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Link</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
+                                            ))
+                                        ) : (
                                             <tr>
                                                 <td colSpan={9} style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                                                     No trades logged yet. Click "Add Entry" to get started.
                                                 </td>
                                             </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </Card>
-                        </div>
-                    )}
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </div>
 
                     <AddTradeModal
                         isOpen={isModalOpen}
                         onClose={() => setIsModalOpen(false)}
                     />
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };

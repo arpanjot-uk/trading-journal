@@ -181,9 +181,9 @@ h6 {
 
 /* Layout Utilities */
 .container {
-  max-width: 1800px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 4rem;
 }
 
 .flex-center {
@@ -236,7 +236,7 @@ h6 {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 350px 1fr;
   gap: 1.5rem;
   margin-bottom: 3rem;
   align-items: start;

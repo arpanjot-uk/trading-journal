@@ -128,8 +128,8 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose })
         setChecklistAnswers(prev => ({ ...prev, [question]: answer }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (journalId === 0 || !pair || !strategy) {
             alert("Please fill all required fields.");
             return;
@@ -270,7 +270,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose })
                         <div>
                             <h4 className="text-secondary" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Trade Parameters</h4>
                             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '1rem' }}>
-                                <Input type="number" step="0.01" label="Lots" value={lots} onChange={e => setLots(Number(e.target.value))} required />
+                                <Input type="number" step="0.01" label="Lots" value={lots} onChange={e => setLots(Number(e.target.value))} />
                                 <Input type="number" step="0.1" label="RR" value={rr} onChange={e => setRr(Number(e.target.value))} />
                                 <Input type="number" step="0.1" label="SL (pips)" value={sl} onChange={e => setSl(Number(e.target.value))} />
                                 <Input type="number" step="0.1" label="TP (pips)" value={tp} onChange={e => setTp(Number(e.target.value))} />
@@ -291,8 +291,8 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose })
                                     ]}
                                 />
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <Input type="number" step="0.01" label="Gross PnL ($)" value={pnl} onChange={e => setPnl(Number(e.target.value))} required />
-                                    <Input type="number" step="0.01" label="Net PnL ($)" value={netPnl} onChange={e => setNetPnl(Number(e.target.value))} required />
+                                    <Input type="number" step="0.01" label="Gross PnL ($)" value={pnl} onChange={e => setPnl(Number(e.target.value))} />
+                                    <Input type="number" step="0.01" label="Net PnL ($)" value={netPnl} onChange={e => setNetPnl(Number(e.target.value))} />
                                 </div>
                             </div>
                         </div>
@@ -344,6 +344,11 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose })
                         {step > 1 && (
                             <Button type="button" variant="secondary" onClick={handleBack}>
                                 Back
+                            </Button>
+                        )}
+                        {step < 3 && (
+                            <Button type="button" variant="ghost" onClick={() => handleSubmit()} style={{ color: 'var(--accent-primary)' }}>
+                                Submit Fast
                             </Button>
                         )}
                         {step < 3 ? (
