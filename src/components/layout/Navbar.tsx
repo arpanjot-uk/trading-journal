@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LineChart, Settings, Moon, Sun, BookOpen, LayoutDashboard, Calendar, FileSpreadsheet, Plus } from 'lucide-react';
+import { LineChart, Settings, Moon, Sun, BookOpen, LayoutDashboard, Calendar, Plus } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 import { AddTradeModal } from '../AddTradeModal';
 import { useJournalContext } from '../../context/JournalContext';
@@ -27,7 +27,6 @@ export const Navbar: React.FC = () => {
     const navLinks = [
         { path: '/', label: 'Journals', icon: <BookOpen size={18} /> },
         { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-        { path: '/log', label: 'Trade Log', icon: <FileSpreadsheet size={18} /> },
         { path: '/calendar', label: 'Calendar', icon: <Calendar size={18} /> },
     ];
 
