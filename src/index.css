@@ -181,7 +181,7 @@ h6 {
 
 /* Layout Utilities */
 .container {
-  max-width: 1400px;
+  max-width: 1800px;
   margin: 0 auto;
   padding: 0 2rem;
 }
@@ -245,5 +245,73 @@ h6 {
 @media (max-width: 900px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Calendar View Utilities */
+.calendar-layout {
+  display: block;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) 240px;
+  gap: 0.5rem;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) 240px;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.calendar-cell {
+  position: relative;
+  min-height: 100px;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-sm);
+  z-index: 10;
+}
+
+.calendar-cell.empty {
+  background: transparent;
+  border-color: transparent;
+  pointer-events: none;
+}
+
+.calendar-cell.win-day {
+  background: var(--win-bg);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.calendar-cell.loss-day {
+  background: var(--loss-bg);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.calendar-cell.neutral-day {
+  background: var(--neutral-bg);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+@media (max-width: 1024px) {
+
+  .calendar-grid,
+  .calendar-header {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 }

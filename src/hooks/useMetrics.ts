@@ -32,9 +32,34 @@ export const useMetrics = (journalId: number) => {
         const dailyMap = new Array(7).fill(0).map((_, d) => ({ day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d], Winners: 0, Losers: 0 }));
         const durationData: { Duration: number, Growth: number, Result: string }[] = [];
 
+        // Advanced Stats Variables
+        let bestTrade = Number.NEGATIVE_INFINITY;
+        let worstTrade = Number.POSITIVE_INFINITY;
+
+        let currentConsecutiveWins = 0;
+        let maxConsecutiveWins = 0;
+        let currentConsecutiveLosses = 0;
+        let maxConsecutiveLosses = 0;
+        let maxConsecutiveProfit = 0; // Total profit during max win streak
+        let maxConsecutiveLoss = 0; // Total loss during max loss streak
+        let currentStreakProfit = 0;
+        let currentStreakLoss = 0;
+
+        let longTrades = 0;
+        let shortTrades = 0;
+        let longWon = 0;
+        let shortWon = 0;
+
+        let totalDuration = 0;
+
         // Add initial balance to growth chart
         if (trades.length > 0) {
             growthData.push({ date: 'Start', equity: balance, profit: 0 });
+            bestTrade = trades[0].netPnl;
+            worstTrade = trades[0].netPnl;
+        } else {
+            bestTrade = 0;
+            worstTrade = 0;
         }
 
         trades.forEach((t) => {
@@ -55,6 +80,59 @@ export const useMetrics = (journalId: number) => {
             } else if (t.result === 'Loss') {
                 totalLost++;
                 grossLoss += Math.abs(t.netPnl);
+            }
+
+            // Advanced Metrics Logic
+            if (t.netPnl > bestTrade) bestTrade = t.netPnl;
+            if (t.netPnl < worstTrade) worstTrade = t.netPnl;
+            totalDuration += t.duration;
+
+            if (t.direction === 'Buy') {
+                longTrades++;
+                if (t.result === 'Win') longWon++;
+            } else if (t.direction === 'Sell') {
+                shortTrades++;
+                if (t.result === 'Win') shortWon++;
+            }
+
+            // Streak Logic (must be sequential by date, assuming trades are sorted ascending)
+            if (t.result === 'Win') {
+                currentConsecutiveWins++;
+                currentStreakProfit += t.netPnl;
+
+                // Break loss streak
+                if (currentConsecutiveLosses > maxConsecutiveLosses) {
+                    maxConsecutiveLosses = currentConsecutiveLosses;
+                    maxConsecutiveLoss = currentStreakLoss;
+                }
+                currentConsecutiveLosses = 0;
+                currentStreakLoss = 0;
+
+            } else if (t.result === 'Loss') {
+                currentConsecutiveLosses++;
+                currentStreakLoss += t.netPnl;
+
+                // Break win streak
+                if (currentConsecutiveWins > maxConsecutiveWins) {
+                    maxConsecutiveWins = currentConsecutiveWins;
+                    maxConsecutiveProfit = currentStreakProfit;
+                }
+                currentConsecutiveWins = 0;
+                currentStreakProfit = 0;
+            } else {
+                // Break both streaks on break even
+                if (currentConsecutiveWins > maxConsecutiveWins) {
+                    maxConsecutiveWins = currentConsecutiveWins;
+                    maxConsecutiveProfit = currentStreakProfit;
+                }
+                if (currentConsecutiveLosses > maxConsecutiveLosses) {
+                    maxConsecutiveLosses = currentConsecutiveLosses;
+                    maxConsecutiveLoss = currentStreakLoss;
+                }
+                currentConsecutiveWins = 0;
+                currentStreakProfit = 0;
+                currentConsecutiveLosses = 0;
+                currentStreakLoss = 0;
             }
 
             // Pair Map
@@ -99,12 +177,24 @@ export const useMetrics = (journalId: number) => {
             });
         });
 
+        // Final Streak check
+        if (currentConsecutiveWins > maxConsecutiveWins) {
+            maxConsecutiveWins = currentConsecutiveWins;
+            maxConsecutiveProfit = currentStreakProfit;
+        }
+        if (currentConsecutiveLosses > maxConsecutiveLosses) {
+            maxConsecutiveLosses = currentConsecutiveLosses;
+            maxConsecutiveLoss = currentStreakLoss;
+        }
+
         const totalTrades = trades.length;
         const winRate = totalTrades ? (totalWon / totalTrades) * 100 : 0;
+        const lossRate = totalTrades ? (totalLost / totalTrades) * 100 : 0;
         const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? 999 : 0);
         const avgWin = totalWon ? grossProfit / totalWon : 0;
         const avgLoss = totalLost ? grossLoss / totalLost : 0;
         const expectancy = (winRate / 100 * avgWin) - ((1 - winRate / 100) * avgLoss);
+        const avgDuration = totalTrades ? totalDuration / totalTrades : 0;
 
         const gain = ((balance - startingBalance) / startingBalance) * 100;
 
@@ -116,10 +206,12 @@ export const useMetrics = (journalId: number) => {
                 totalWon,
                 totalLost,
                 winRate,
+                lossRate,
                 profitFactor,
                 avgWin,
                 avgLoss,
                 expectancy,
+                avgDuration,
                 totalLots,
                 balance,
                 startingBalance,
@@ -127,6 +219,18 @@ export const useMetrics = (journalId: number) => {
                 maxDrawdown,
                 totalPnl,
                 totalGrossPnl,
+                grossProfit,
+                grossLoss,
+                bestTrade,
+                worstTrade,
+                maxConsecutiveWins,
+                maxConsecutiveLosses,
+                maxConsecutiveProfit,
+                maxConsecutiveLoss,
+                longTrades,
+                shortTrades,
+                longWon,
+                shortWon
             },
             charts: {
                 growthData,
