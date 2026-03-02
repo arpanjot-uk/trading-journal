@@ -18,7 +18,6 @@ export const Navbar: React.FC = () => {
     const { activeJournalId } = useJournalContext();
 
     const todayDateStr = format(new Date(), 'yyyy-MM-dd');
-    const settings = useLiveQuery(() => db.settings.toCollection().first());
     const hasLoggedToday = useLiveQuery(async () => {
         if (!activeJournalId) return true; // Assume true to hide if no journal
         const todayMood = await db.dailyMoods.where({ journalId: activeJournalId, date: todayDateStr }).first();
@@ -88,7 +87,7 @@ export const Navbar: React.FC = () => {
                         <Plus size={20} />
                         <span>Add Trade</span>
                     </button>
-                    {(!hasLoggedToday && settings?.enableMoodTracker) && (
+                    {!hasLoggedToday && (
                         <button
                             className="flex-center hover-effect"
                             style={{

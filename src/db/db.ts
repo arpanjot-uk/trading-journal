@@ -39,7 +39,7 @@ export interface Trade {
   tvLink?: string; // TradingView link
   screenshotUrl?: string; // Additional or alternative chart screenshot link
   notes: {
-    emotion: string | {
+    emotion: {
       text: string;
       fomo?: number;
       patience?: number;
@@ -89,6 +89,19 @@ db.version(2).stores({
   trades: '++id, journalId, openDate, closeDate, pair, strategy, direction, result',
   settings: '++id, pairs, strategies, enableMoodTracker',
   dailyMoods: '++id, journalId, date, moodScore'
+});
+
+db.version(3).stores({
+  journals: '++id, name, createdAt, updatedAt',
+  trades: '++id, journalId, [journalId+openDate], openDate, closeDate, pair, strategy, direction, result',
+  settings: '++id',
+  dailyMoods: '++id, &[journalId+date], journalId, date, moodScore'
+}).upgrade(tx => {
+  return tx.table('trades').toCollection().modify(trade => {
+    if (trade.notes && typeof trade.notes.emotion === 'string') {
+      trade.notes.emotion = { text: trade.notes.emotion };
+    }
+  });
 });
 
 export const initializeSettings = async () => {

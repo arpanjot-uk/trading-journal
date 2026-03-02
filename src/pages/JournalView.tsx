@@ -143,13 +143,21 @@ export const JournalView: React.FC = () => {
         });
 
         const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `journal_${journal?.name?.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.csv`;
+        link.href = url;
+
+        const safeName = (journal?.name || 'export').replace(/[^a-zA-Z0-9]/g, '_');
+        link.download = `journal_${safeName}_${format(new Date(), 'yyyyMMdd')}.csv`;
+
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+
+        setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }, 100);
     };
 
     if (!activeJournalId) {
