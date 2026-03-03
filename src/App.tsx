@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AppLayout } from './components/layout/AppLayout';
 import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
@@ -14,6 +15,7 @@ function App() {
         <Route path="/log" element={<JournalView />} />
         <Route path="/calendar" element={<CalendarPage />} />
       </Routes>
+      <Analytics />
     </AppLayout>
   );
 }
