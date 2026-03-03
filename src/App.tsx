@@ -6,6 +6,7 @@ import { Dashboard } from './pages/Dashboard';
 import { JournalView } from './pages/JournalView';
 import { CalendarPage } from './pages/CalendarPage';
 import { EmotionDashboard } from './pages/EmotionDashboard';
+import { StrategyAnalysis } from './pages/StrategyAnalysis';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/log" element={<JournalView />} />
           <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/strategy" element={<StrategyAnalysis />} />
           <Route path="/emotions" element={<EmotionDashboard />} />
         </Routes>
       </AppLayout>

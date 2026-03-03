@@ -145,6 +145,10 @@ const StrategyBuilderModal: React.FC<{
     const addQuestion = (e: React.FormEvent) => {
         e.preventDefault();
         if (targetSectionIdx === null || !newQuestionText.trim()) return;
+        if (totalQuestions >= MAX_CHECKLIST) {
+            alert(`Maximum ${MAX_CHECKLIST} checklist items allowed per strategy.`);
+            return;
+        }
         const updated = [...checklist];
         updated[targetSectionIdx].questions.push(newQuestionText.trim());
         setChecklist(updated);
@@ -158,12 +162,28 @@ const StrategyBuilderModal: React.FC<{
         setChecklist(updated);
     };
 
+    const totalQuestions = checklist.reduce((acc, c) => acc + c.questions.length, 0);
+    const MAX_CHECKLIST = 20;
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Builder: ${name || 'New Strategy'}`} width="600px">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <Input label="Strategy Name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Trend Following" />
 
-                <SectionCard label="Checklist Sections">
+                <SectionCard
+                    label="Checklist Sections"
+                    action={
+                        <span style={{
+                            fontSize: '0.72rem', fontWeight: 700,
+                            color: totalQuestions >= MAX_CHECKLIST ? 'var(--loss-color)' : 'var(--text-muted)',
+                            background: totalQuestions >= MAX_CHECKLIST ? 'var(--loss-bg)' : 'var(--bg-primary)',
+                            padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-round)',
+                            border: '1px solid ' + (totalQuestions >= MAX_CHECKLIST ? 'rgba(239,68,68,0.3)' : 'var(--border-color)')
+                        }}>
+                            {totalQuestions}/{MAX_CHECKLIST} checks
+                        </span>
+                    }
+                >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
                         {checklist.length === 0 && (
                             <p className="text-muted" style={{ fontSize: '0.875rem' }}>
