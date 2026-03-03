@@ -19,7 +19,7 @@ import { SEO } from '../components/SEO';
 
 // --- Helpers ---
 const MOOD_COLORS: Record<number, string> = {
-    1: '#EF4444', 2: '#F97316', 3: '#EAB308', 4: '#84CC16', 5: '#22C55E'
+    1: 'var(--loss-color)', 2: '#F97316', 3: '#EAB308', 4: '#84CC16', 5: 'var(--win-color)'
 };
 
 const MOOD_ICONS: Record<number, React.ReactNode> = {
@@ -141,10 +141,10 @@ export const EmotionDashboard: React.FC = () => {
     const noData = moodPerfData.length === 0 && kpis.totalDaysLogged === 0;
     const weekDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const lifestyleCategories = [
-        { key: 'exercise', label: 'Exercise', color: '#22C55E' },
+        { key: 'exercise', label: 'Exercise', color: 'var(--win-color)' },
         { key: 'diet', label: 'Diet', color: '#F59E0B' },
         { key: 'sleep', label: 'Sleep', color: '#8B5CF6' },
-        { key: 'stress', label: 'Stress', color: '#EF4444' },
+        { key: 'stress', label: 'Stress', color: 'var(--loss-color)' },
     ];
 
     return (
@@ -183,16 +183,16 @@ export const EmotionDashboard: React.FC = () => {
                             title="Mood Log Rate"
                             value={`${kpis.logRate}%`}
                             subtitle={`${kpis.totalDaysLogged} of ${kpis.totalTradingDays} trading days`}
-                            icon={<CheckCircle2 size={14} color="#22C55E" />}
-                            iconBg="rgba(34,197,94,0.12)"
+                            icon={<CheckCircle2 size={14} color="var(--win-color)" />}
+                            iconBg="var(--win-bg)"
                             valueColor={kpis.logRate >= 70 ? 'var(--win-color)' : kpis.logRate >= 40 ? '#EAB308' : 'var(--loss-color)'}
                         />
                         <KpiCard
                             title="Good Mood Days PnL"
                             value={formatMoney(kpis.avgPnlGoodMood)}
                             subtitle="Avg PnL when mood ≥ 4"
-                            icon={<SmilePlus size={14} color="#22C55E" />}
-                            iconBg="rgba(34,197,94,0.12)"
+                            icon={<SmilePlus size={14} color="var(--win-color)" />}
+                            iconBg="var(--win-bg)"
                             valueColor={kpis.avgPnlGoodMood >= 0 ? 'var(--win-color)' : 'var(--loss-color)'}
                             trend={kpis.avgPnlGoodMood >= 0 ? 'up' : 'down'}
                         />
@@ -200,8 +200,8 @@ export const EmotionDashboard: React.FC = () => {
                             title="Bad Mood Days PnL"
                             value={formatMoney(kpis.avgPnlBadMood)}
                             subtitle="Avg PnL when mood ≤ 2"
-                            icon={<Frown size={14} color="#EF4444" />}
-                            iconBg="rgba(239,68,68,0.12)"
+                            icon={<Frown size={14} color="var(--loss-color)" />}
+                            iconBg="var(--loss-bg)"
                             valueColor={kpis.avgPnlBadMood >= 0 ? 'var(--win-color)' : 'var(--loss-color)'}
                             trend={kpis.avgPnlBadMood >= 0 ? 'up' : 'down'}
                         />
@@ -224,9 +224,9 @@ export const EmotionDashboard: React.FC = () => {
                                         <YAxis domain={[0, 10]} stroke="var(--text-secondary)" fontSize={11} />
                                         <RechartsTooltip contentStyle={tooltipStyle} />
                                         <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
-                                        <Bar dataKey="Win" fill="#22C55E" radius={[3, 3, 0, 0]} />
-                                        <Bar dataKey="Loss" fill="#EF4444" radius={[3, 3, 0, 0]} />
-                                        <Bar dataKey="Break Even" fill="#8B5CF6" radius={[3, 3, 0, 0]} />
+                                        <Bar dataKey="Win" fill="var(--win-color)" radius={[3, 3, 0, 0]} />
+                                        <Bar dataKey="Loss" fill="var(--loss-color)" radius={[3, 3, 0, 0]} />
+                                        <Bar dataKey="Break Even" fill="var(--text-muted)" radius={[3, 3, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -260,7 +260,7 @@ export const EmotionDashboard: React.FC = () => {
                                             {moodPerfData.map((entry, i) => (
                                                 <Cell
                                                     key={i}
-                                                    fill={entry.dayPnl >= 0 ? '#22C55E' : '#EF4444'}
+                                                    fill={entry.dayPnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)'}
                                                     fillOpacity={0.75}
                                                     stroke={getMoodColor(entry.moodScore)}
                                                     strokeWidth={2}
@@ -318,8 +318,8 @@ export const EmotionDashboard: React.FC = () => {
                                             <YAxis yAxisId="right" orientation="right" stroke="var(--text-secondary)" fontSize={11} tickFormatter={v => `$${v}`} />
                                             <RechartsTooltip contentStyle={tooltipStyle} />
                                             <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
-                                            <Line yAxisId="left" type="monotone" dataKey="avgMood" name="Avg Mood" stroke="#8B5CF6" strokeWidth={2.5} dot={{ r: 4, fill: '#8B5CF6' }} />
-                                            <Line yAxisId="right" type="monotone" dataKey="netPnl" name="Net PnL ($)" stroke="#22C55E" strokeWidth={2.5} dot={{ r: 4, fill: '#22C55E' }} />
+                                            <Line yAxisId="left" type="monotone" dataKey="avgMood" name="Avg Mood" stroke="var(--accent-primary)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--accent-primary)' }} />
+                                            <Line yAxisId="right" type="monotone" dataKey="netPnl" name="Net PnL ($)" stroke="var(--win-color)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--win-color)' }} />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 )}
@@ -365,7 +365,7 @@ export const EmotionDashboard: React.FC = () => {
                                 <AlertTriangle size={10} color="#F59E0B" /> Missed log
                             </span>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                <span style={{ fontSize: '0.7rem' }}>📊</span> Traded
+                                <TrendingUp size={12} className="text-muted" /> Traded
                             </span>
                         </div>
 
@@ -421,7 +421,7 @@ export const EmotionDashboard: React.FC = () => {
                                             {/* Trade indicator */}
                                             {day.hadTrades && (
                                                 <div style={{ marginTop: 'auto', fontSize: '0.68rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                                                    <span>📊</span>
+                                                    <TrendingUp size={10} className="text-muted" />
                                                     <span style={{ color: day.dayPnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)', fontWeight: 600 }}>
                                                         {day.dayPnl >= 0 ? '+' : ''}{day.dayPnl.toFixed(0)}
                                                     </span>
@@ -446,7 +446,7 @@ export const EmotionDashboard: React.FC = () => {
                                     </div>
                                     {week.avgMood !== null && (
                                         <div style={{ fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.2rem', color: getMoodColor(Math.round(week.avgMood)) }}>
-                                            <span>😊</span>{week.avgMood.toFixed(1)}
+                                            <Smile size={16} className="text-muted" />{week.avgMood.toFixed(1)}
                                         </div>
                                     )}
                                 </div>

@@ -100,11 +100,11 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
     };
 
     const faces = [
-        { score: 1, icon: <Angry size={40} />, color: '#EF4444', label: 'Terrible' }, // Red
+        { score: 1, icon: <Angry size={40} />, color: 'var(--loss-color)', label: 'Terrible' }, // Red
         { score: 2, icon: <Frown size={40} />, color: '#F97316', label: 'Bad' },      // Orange
         { score: 3, icon: <Meh size={40} />, color: '#EAB308', label: 'Neutral' },  // Yellow
         { score: 4, icon: <Smile size={40} />, color: '#84CC16', label: 'Good' },     // Light Green
-        { score: 5, icon: <SmilePlus size={40} />, color: '#22C55E', label: 'Excellent' } // Green
+        { score: 5, icon: <SmilePlus size={40} />, color: 'var(--win-color)', label: 'Excellent' } // Green
     ];
 
     return (
@@ -182,7 +182,7 @@ export const DailyMoodModal: React.FC<DailyMoodModalProps> = ({ isOpen, onClose,
                             max="100"
                             value={stressLevel}
                             onChange={e => setStressLevel(Number(e.target.value))}
-                            style={{ width: '100%', accentColor: '#EF4444' }}
+                            style={{ width: '100%', accentColor: 'var(--loss-color)' }}
                         />
                     </div>
                 </div>

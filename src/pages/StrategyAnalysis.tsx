@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip as RechartsTooltip, ResponsiveContainer,
-    LineChart, Line, Cell
+    LineChart, Line, Cell, Legend
 } from 'recharts';
 import {
     BookOpen, CheckCircle2, XCircle, BarChart2,
@@ -285,6 +285,41 @@ export const StrategyAnalysis: React.FC = () => {
             .sort((a, b) => b.pnl - a.pnl);
     }, [stats]);
 
+    // Memoize per-strategy stats — avoids redundant computeStrategyStats calls in Overview
+    const allStrategyStats = useMemo((): Map<string, StrategyStats> => {
+        if (!trades) return new Map();
+        const map = new Map<string, StrategyStats>();
+        strategies.forEach(s => {
+            const sTrades = trades.filter(t => t.strategy === s.name);
+            if (sTrades.length > 0)
+                map.set(s.name, computeStrategyStats(sTrades, s, journal?.startingBalance ?? 10000));
+        });
+        return map;
+    }, [trades, strategies, journal?.startingBalance]);
+
+    // Equity comparison data — all strategies normalized to $0 start
+    const equityComparisonData = useMemo(() => {
+        if (!trades || strategies.length === 0) return [];
+        const allDates = new Set<string>();
+        const lines: Record<string, Record<string, number>> = {};
+        strategies.forEach(s => {
+            const sStats = allStrategyStats.get(s.name);
+            if (!sStats) return;
+            lines[s.name] = {};
+            sStats.equityCurve.forEach(p => {
+                if (p.date !== 'Start') {
+                    allDates.add(p.date);
+                    lines[s.name][p.date] = +(p.equity - (journal?.startingBalance ?? 10000)).toFixed(2);
+                }
+            });
+        });
+        return Array.from(allDates).sort().map(date => {
+            const row: Record<string, any> = { date };
+            strategies.forEach(s => { if (lines[s.name]) row[s.name] = lines[s.name][date] ?? null; });
+            return row;
+        });
+    }, [allStrategyStats, strategies, journal?.startingBalance, trades]);
+
     // Guard: no journal
     if (!activeJournalId) {
         return (
@@ -292,7 +327,7 @@ export const StrategyAnalysis: React.FC = () => {
                 <BookOpen size={48} className="text-muted" />
                 <h2 className="text-secondary">No Journal Selected</h2>
                 <p className="text-muted">Select a journal from the Journals page to view strategy analytics.</p>
-                <Button onClick={() => navigate('/')}>Go to Journals</Button>
+                <Button onClick={() => navigate('/journal')}>Go to Journals</Button>
             </div>
         );
     }
@@ -317,7 +352,25 @@ export const StrategyAnalysis: React.FC = () => {
 
             </div>
 
-            {/* Guard: no trades for this strategy */}
+            {/* ── Strategy Tabs ── */}
+            {strategies.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginBottom: '1.5rem', padding: '0.3rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', width: 'fit-content', maxWidth: '100%' }}>
+                    <button onClick={() => setSelectedStrategy('')} style={{ padding: '0.4rem 0.9rem', borderRadius: 'var(--radius-sm)', fontWeight: activeStrategyName === 'Overview' ? 600 : 500, fontSize: '0.82rem', border: 'none', cursor: 'pointer', background: activeStrategyName === 'Overview' ? 'var(--card-bg)' : 'transparent', color: activeStrategyName === 'Overview' ? 'var(--accent-secondary)' : 'var(--text-muted)', boxShadow: activeStrategyName === 'Overview' ? 'var(--card-shadow-sm)' : 'none', transition: 'all 0.15s' }}>Overview</button>
+                    {strategies.map((s, i) => {
+                        const isActive = activeStrategyName === s.name;
+                        const sStats = allStrategyStats.get(s.name);
+                        return (
+                            <button key={s.name} onClick={() => setSelectedStrategy(s.name)} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.9rem', borderRadius: 'var(--radius-sm)', fontWeight: isActive ? 600 : 500, fontSize: '0.82rem', border: 'none', cursor: 'pointer', background: isActive ? 'var(--card-bg)' : 'transparent', color: isActive ? 'var(--accent-secondary)' : 'var(--text-muted)', boxShadow: isActive ? 'var(--card-shadow-sm)' : 'none', transition: 'all 0.15s' }}>
+                                <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: PAIR_COLORS[i % PAIR_COLORS.length], flexShrink: 0 }} />
+                                {s.name}
+                                {sStats && <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '0.1rem 0.3rem', borderRadius: '3px', background: sStats.netPnl >= 0 ? 'var(--win-bg)' : 'var(--loss-bg)', color: sStats.netPnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)' }}>{sStats.won}W/{sStats.lost}L</span>}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Guard: no strategies configured */}
             {strategies.length === 0 && (
                 <div className="flex-center" style={{ flexDirection: 'column', gap: '1rem', minHeight: '40vh' }}>
                     <Layers size={40} className="text-muted" />
@@ -327,50 +380,66 @@ export const StrategyAnalysis: React.FC = () => {
 
             {activeStrategyName === 'Overview' && strategies.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {/* All Strategies Compare Table */}
-                    <Card noHover style={{ padding: '1.5rem' }}>
-                        <h3 style={{ margin: '0 0 1.25rem', fontSize: '0.95rem', fontWeight: 600 }}>Strategies Overview</h3>
-                        <table className="data-table">
+
+                    {/* ── Enhanced Comparison Table ── */}
+                    <Card noHover style={{ padding: '1.5rem', overflowX: 'auto' }}>
+                        <div style={{ marginBottom: '1.25rem' }}>
+                            <h3 style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 600 }}>Strategy Comparison</h3>
+                            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>Click any row to view detailed analytics · Color coding: green = good, yellow = caution, red = poor</p>
+                        </div>
+                        <table className="data-table" style={{ minWidth: '900px' }}>
                             <thead>
                                 <tr>
-                                    <th>Strategy</th>
-                                    <th>Trades</th>
-                                    <th>Win %</th>
-                                    <th>Net P&L</th>
-                                    <th>Avg R:R</th>
-                                    <th>Checks</th>
+                                    <th style={{ textAlign: 'left' }}>Strategy</th>
+                                    <th title="Total trades logged">Trades</th>
+                                    <th title="Winning trades ÷ total trades">Win %</th>
+                                    <th title="Total net profit or loss">Net P&L</th>
+                                    <th title="Gross profit ÷ gross loss. Target ≥ 1.5">Prof. Factor</th>
+                                    <th title="(WinRate × AvgWin) − (LossRate × AvgLoss). Must be positive">Exp. Value</th>
+                                    <th title="Average planned risk-reward ratio">Avg R:R</th>
+                                    <th title="Max drawdown from account peak. Lower is better">Max DD%</th>
+                                    <th title="Average profit on winning trades">Avg Win</th>
+                                    <th title="Average loss on losing trades">Avg Loss</th>
+                                    <th title="Avg Win ÷ Avg Loss. Target ≥ 1.5×">W/L Ratio</th>
+                                    <th title="Pre-trade checklist compliance rate">✓ Rules</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {strategies.map(s => {
-                                    const sTrades = (trades ?? []).filter(t => t.strategy === s.name);
-                                    if (sTrades.length === 0) return (
-                                        <tr key={s.name} style={{ opacity: 0.45 }} onClick={() => setSelectedStrategy(s.name)}>
-                                            <td style={{ cursor: 'pointer' }}><strong>{s.name}</strong></td>
+                                    const sStats = allStrategyStats.get(s.name);
+                                    if (!sStats) return (
+                                        <tr key={s.name} style={{ opacity: 0.4 }} onClick={() => setSelectedStrategy(s.name)}>
+                                            <td style={{ cursor: 'pointer', fontWeight: 600 }}>{s.name}</td>
                                             <td>0</td>
-                                            <td>—</td>
-                                            <td>—</td>
-                                            <td>—</td>
-                                            <td>—</td>
+                                            <td colSpan={10} style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>No trades logged yet — click to set up</td>
                                         </tr>
                                     );
-                                    const sStats = computeStrategyStats(sTrades, s, journal?.startingBalance ?? 10000);
-                                    const sWr = sTrades.length > 0 ? (sStats.won / sStats.trades) * 100 : 0;
+                                    const sWr = (sStats.won / sStats.trades) * 100;
+                                    const avgWin = sStats.won > 0 ? sStats.grossProfit / sStats.won : 0;
+                                    const avgLoss = sStats.lost > 0 ? sStats.netLoss / sStats.lost : 0;
+                                    const wlRatio = avgLoss > 0 ? avgWin / avgLoss : null;
+                                    const pf = sStats.profitFactor;
+                                    const pfColor = pf === null ? 'var(--text-muted)' : pf >= 1.5 ? 'var(--win-color)' : pf >= 1.0 ? 'var(--neutral-color)' : 'var(--loss-color)';
+                                    const ddColor = sStats.maxDrawdown < 10 ? 'var(--win-color)' : sStats.maxDrawdown < 20 ? '#EAB308' : 'var(--loss-color)';
+                                    const wlColor = wlRatio === null ? 'var(--text-muted)' : wlRatio >= 1.5 ? 'var(--win-color)' : wlRatio >= 1.0 ? 'var(--neutral-color)' : 'var(--loss-color)';
                                     return (
-                                        <tr
-                                            key={s.name}
-                                            onClick={() => setSelectedStrategy(s.name)}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            <td style={{ fontWeight: 500 }}>
-                                                {s.name}
-                                            </td>
-                                            <td>{sStats.trades}</td>
-                                            <td style={{ color: sWr >= 50 ? 'var(--win-color)' : 'var(--loss-color)' }}>{sWr.toFixed(0)}%</td>
-                                            <td style={{ color: sStats.netPnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)', fontWeight: 600 }}>{fmt$(sStats.netPnl)}</td>
-                                            <td>{sStats.avgRr.toFixed(2)}R</td>
+                                        <tr key={s.name} onClick={() => setSelectedStrategy(s.name)} style={{ cursor: 'pointer' }}>
+                                            <td style={{ fontWeight: 600 }}>{s.name}</td>
                                             <td>
-                                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: sStats.complianceRate >= 80 ? 'var(--win-color)' : sStats.complianceRate >= 50 ? 'var(--neutral-color)' : 'var(--loss-color)' }}>
+                                                {sStats.trades}
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '0.3rem' }}>{sStats.won}W/{sStats.lost}L</span>
+                                            </td>
+                                            <td style={{ color: sWr >= 50 ? 'var(--win-color)' : 'var(--loss-color)', fontWeight: 600 }}>{sWr.toFixed(0)}%</td>
+                                            <td style={{ color: sStats.netPnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)', fontWeight: 600 }}>{fmt$(sStats.netPnl)}</td>
+                                            <td style={{ color: pfColor, fontWeight: 600 }}>{pf === null ? '—' : pf >= 999 ? '∞' : pf.toFixed(2)}</td>
+                                            <td style={{ color: sStats.expectedValue >= 0 ? 'var(--win-color)' : 'var(--loss-color)', fontWeight: 600 }}>{fmt$(sStats.expectedValue)}</td>
+                                            <td>{sStats.avgRr > 0 ? `${sStats.avgRr.toFixed(2)}R` : '—'}</td>
+                                            <td style={{ color: ddColor, fontWeight: 600 }}>{sStats.maxDrawdown.toFixed(1)}%</td>
+                                            <td style={{ color: 'var(--win-color)' }}>{avgWin > 0 ? fmt$(avgWin) : '—'}</td>
+                                            <td style={{ color: 'var(--loss-color)' }}>{avgLoss > 0 ? fmt$(avgLoss) : '—'}</td>
+                                            <td style={{ color: wlColor, fontWeight: 600 }}>{wlRatio !== null ? `${wlRatio.toFixed(2)}×` : '—'}</td>
+                                            <td>
+                                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: sStats.complianceRate >= 80 ? 'var(--win-color)' : sStats.complianceRate >= 50 ? 'var(--neutral-color)' : sStats.complianceRate > 0 ? 'var(--loss-color)' : 'var(--text-muted)' }}>
                                                     {sStats.complianceRate > 0 ? `${sStats.complianceRate.toFixed(0)}%` : '—'}
                                                 </span>
                                             </td>
@@ -381,95 +450,86 @@ export const StrategyAnalysis: React.FC = () => {
                         </table>
                     </Card>
 
-                    {/* Comparative Charts */}
+                    {/* ── Cumulative P&L Comparison (multi-line, normalized to $0) ── */}
+                    {equityComparisonData.length > 0 && (
+                        <Card noHover style={{ padding: '1.5rem' }}>
+                            <h3 style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 600 }}>Cumulative P&L Comparison</h3>
+                            <p style={{ margin: '0 0 1.25rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>All strategies normalized to $0 — shows which grew fastest over time</p>
+                            <ResponsiveContainer width="100%" height={260}>
+                                <LineChart data={equityComparisonData} margin={{ top: 5, right: 15, left: 10, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                                    <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={10} tick={{ fontSize: 10 }} />
+                                    <YAxis stroke="var(--text-secondary)" fontSize={10} tickFormatter={v => `$${v >= 0 ? '+' : ''}${v}`} />
+                                    <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem' }} formatter={(v, name) => { const n = Number(v); return [`$${n >= 0 ? '+' : ''}${n.toFixed(2)}`, name]; }} />
+                                    <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
+                                    {strategies.filter(s => allStrategyStats.has(s.name)).map((s, i) => (
+                                        <Line key={s.name} type="monotone" dataKey={s.name} stroke={PAIR_COLORS[i % PAIR_COLORS.length]} strokeWidth={2.5} dot={false} connectNulls />
+                                    ))}
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </Card>
+                    )}
+
+                    {/* ── Net P&L + Win Rate ── */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                         <Card noHover style={{ padding: '1.5rem' }}>
                             <h3 style={{ margin: '0 0 1.25rem', fontSize: '0.95rem', fontWeight: 600 }}>Net P&L by Strategy</h3>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={strategies.map(s => {
-                                    const sTrades = (trades ?? []).filter(t => t.strategy === s.name);
-                                    const sStats = sTrades.length > 0 ? computeStrategyStats(sTrades, s, 0) : { netPnl: 0 };
-                                    return { name: s.name, pnl: sStats.netPnl };
-                                })} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
+                            <ResponsiveContainer width="100%" height={230}>
+                                <BarChart data={strategies.map(s => ({ name: s.name, pnl: allStrategyStats.get(s.name)?.netPnl ?? 0 }))} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                                    <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={11} interval={0} tick={{ fontSize: 10 }} />
+                                    <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={10} interval={0} tick={{ fontSize: 10 }} />
                                     <YAxis stroke="var(--text-secondary)" fontSize={11} tickFormatter={v => `$${v}`} />
                                     <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem' }} />
                                     <Bar dataKey="pnl" name="Net P&L" radius={[3, 3, 0, 0]}>
-                                        {strategies.map((s, i) => {
-                                            const sTrades = (trades ?? []).filter(t => t.strategy === s.name);
-                                            const pnl = sTrades.reduce((acc, t) => acc + t.netPnl, 0);
-                                            return <Cell key={i} fill={pnl >= 0 ? 'var(--win-color)' : 'var(--loss-color)'} />;
-                                        })}
+                                        {strategies.map((s, i) => <Cell key={i} fill={(allStrategyStats.get(s.name)?.netPnl ?? 0) >= 0 ? 'var(--win-color)' : 'var(--loss-color)'} />)}
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </Card>
-
                         <Card noHover style={{ padding: '1.5rem' }}>
                             <h3 style={{ margin: '0 0 1.25rem', fontSize: '0.95rem', fontWeight: 600 }}>Win Rate by Strategy</h3>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={strategies.map(s => {
-                                    const sTrades = (trades ?? []).filter(t => t.strategy === s.name);
-                                    let wr = 0;
-                                    if (sTrades.length > 0) {
-                                        const won = sTrades.filter(t => t.result === 'Win').length;
-                                        wr = (won / sTrades.length) * 100;
-                                    }
-                                    return { name: s.name, wr: +wr.toFixed(1) };
-                                })} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
+                            <ResponsiveContainer width="100%" height={230}>
+                                <BarChart data={strategies.map(s => { const st = allStrategyStats.get(s.name); return { name: s.name, wr: st ? +((st.won / st.trades) * 100).toFixed(1) : 0 }; })} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                                    <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={11} interval={0} tick={{ fontSize: 10 }} />
+                                    <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={10} interval={0} tick={{ fontSize: 10 }} />
                                     <YAxis stroke="var(--text-secondary)" fontSize={11} tickFormatter={v => `${v}%`} domain={[0, 100]} />
                                     <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem' }} />
                                     <Bar dataKey="wr" name="Win Rate" radius={[3, 3, 0, 0]}>
-                                        {strategies.map((s, i) => {
-                                            const sTrades = (trades ?? []).filter(t => t.strategy === s.name);
-                                            const wr = sTrades.length > 0 ? (sTrades.filter(t => t.result === 'Win').length / sTrades.length) * 100 : 0;
-                                            return <Cell key={i} fill={wr >= 50 ? 'var(--win-color)' : 'var(--loss-color)'} />;
-                                        })}
+                                        {strategies.map((s, i) => { const st = allStrategyStats.get(s.name); return <Cell key={i} fill={st && (st.won / st.trades) * 100 >= 50 ? 'var(--win-color)' : 'var(--loss-color)'} />; })}
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </Card>
                     </div>
 
+                    {/* ── Expected Value + Profit Factor ── */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                         <Card noHover style={{ padding: '1.5rem' }}>
-                            <h3 style={{ margin: '0 0 1.25rem', fontSize: '0.95rem', fontWeight: 600 }}>Trade Count by Strategy</h3>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={strategies.map(s => {
-                                    const sTrades = (trades ?? []).filter(t => t.strategy === s.name);
-                                    return { name: s.name, trades: sTrades.length };
-                                })} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
+                            <h3 style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 600 }}>Expected Value per Trade</h3>
+                            <p style={{ margin: '0 0 1rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>(WR × Avg Win) − (LR × Avg Loss). Must be positive to be profitable long-term.</p>
+                            <ResponsiveContainer width="100%" height={210}>
+                                <BarChart data={strategies.map(s => ({ name: s.name, ev: +(allStrategyStats.get(s.name)?.expectedValue ?? 0).toFixed(2) }))} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                                    <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={11} interval={0} />
-                                    <YAxis stroke="var(--text-secondary)" fontSize={11} allowDecimals={false} />
+                                    <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={10} interval={0} tick={{ fontSize: 10 }} />
+                                    <YAxis stroke="var(--text-secondary)" fontSize={11} tickFormatter={v => `$${v}`} />
                                     <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem' }} />
-                                    <Bar dataKey="trades" name="Trades" fill="#7c3aed" radius={[3, 3, 0, 0]} />
+                                    <Bar dataKey="ev" name="Expected Value" radius={[3, 3, 0, 0]}>
+                                        {strategies.map((s, i) => <Cell key={i} fill={(allStrategyStats.get(s.name)?.expectedValue ?? 0) >= 0 ? 'var(--win-color)' : 'var(--loss-color)'} />)}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </Card>
                         <Card noHover style={{ padding: '1.5rem' }}>
-                            <h3 style={{ margin: '0 0 1.25rem', fontSize: '0.95rem', fontWeight: 600 }}>Profit Factor by Strategy</h3>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={strategies.map(s => {
-                                    const sTrades = (trades ?? []).filter(t => t.strategy === s.name);
-                                    const sStats = sTrades.length > 0 ? computeStrategyStats(sTrades, s, 0) : { grossProfit: 0, netLoss: 0 };
-                                    const profitFactor = sStats.netLoss > 0 ? sStats.grossProfit / sStats.netLoss : (sStats.grossProfit > 0 ? 99 : 0);
-                                    return { name: s.name, pf: +(profitFactor >= 99 ? 10 : profitFactor).toFixed(2), isInfinite: profitFactor >= 99 && sStats.grossProfit > 0 };
-                                })} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
+                            <h3 style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 600 }}>Profit Factor by Strategy</h3>
+                            <p style={{ margin: '0 0 1rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>Gross wins ÷ gross losses. ≥1.5 solid · ≥2.0 excellent · capped at 10 for display.</p>
+                            <ResponsiveContainer width="100%" height={210}>
+                                <BarChart data={strategies.map(s => { const st = allStrategyStats.get(s.name); const pf = st && st.profitFactor !== null ? (st.profitFactor >= 999 ? 10 : st.profitFactor) : 0; return { name: s.name, pf: +pf.toFixed(2), inf: st ? (st.profitFactor ?? 0) >= 999 : false }; })} margin={{ top: 5, right: 5, left: 10, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                                    <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={11} interval={0} />
+                                    <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={10} interval={0} tick={{ fontSize: 10 }} />
                                     <YAxis stroke="var(--text-secondary)" fontSize={11} />
-                                    <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem' }} formatter={(val, _name, props) => { return [props.payload.isInfinite ? '∞' : val, 'Profit Factor']; }} />
+                                    <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem' }} formatter={(val, _n, props) => [props.payload.inf ? '∞' : val, 'Profit Factor']} />
                                     <Bar dataKey="pf" name="Profit Factor" radius={[3, 3, 0, 0]}>
-                                        {strategies.map((s, i) => {
-                                            const sTrades = (trades ?? []).filter(t => t.strategy === s.name);
-                                            const sStats = sTrades.length > 0 ? computeStrategyStats(sTrades, s, 0) : { grossProfit: 0, netLoss: 0 };
-                                            const profitFactor = sStats.netLoss > 0 ? sStats.grossProfit / sStats.netLoss : (sStats.grossProfit > 0 ? 99 : 0);
-                                            return <Cell key={i} fill={profitFactor >= 1.5 ? 'var(--win-color)' : 'var(--neutral-color)'} />;
-                                        })}
+                                        {strategies.map((s, i) => { const pf = allStrategyStats.get(s.name)?.profitFactor ?? 0; return <Cell key={i} fill={pf >= 1.5 ? 'var(--win-color)' : pf >= 1.0 ? 'var(--neutral-color)' : 'var(--loss-color)'} />; })}
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>

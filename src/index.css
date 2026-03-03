@@ -70,48 +70,48 @@
   color-scheme: light;
 
   /* Surfaces */
-  --bg-primary: #f0f2f7;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #e8ecf5;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
   --bg-elevated: #ffffff;
 
   /* Text */
-  --text-primary: #0f1629;
-  --text-secondary: #5a6382;
-  --text-muted: #9aa3bd;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
 
   /* Accent */
-  --accent-primary: #3b6ef5;
-  --accent-secondary: #5a88f8;
-  --accent-hover: #2a5ce0;
-  --accent-glow: rgba(59, 110, 245, 0.14);
+  --accent-primary: #3b82f6;
+  --accent-secondary: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-glow: rgba(59, 130, 246, 0.15);
 
   /* Trading P&L colors */
-  --win-color: #16a34a;
-  --win-bg: rgba(22, 163, 74, 0.09);
-  --win-glow: rgba(22, 163, 74, 0.12);
+  --win-color: #059669;
+  --win-bg: rgba(5, 150, 105, 0.1);
+  --win-glow: rgba(5, 150, 105, 0.15);
 
-  --loss-color: #dc2626;
-  --loss-bg: rgba(220, 38, 38, 0.09);
-  --loss-glow: rgba(220, 38, 38, 0.12);
+  --loss-color: #e11d48;
+  --loss-bg: rgba(225, 29, 72, 0.1);
+  --loss-glow: rgba(225, 29, 72, 0.15);
 
   --neutral-color: #d97706;
-  --neutral-bg: rgba(217, 119, 6, 0.09);
+  --neutral-bg: rgba(217, 119, 6, 0.1);
 
   /* Card / Panel surfaces */
   --card-bg: #ffffff;
-  --card-bg-hover: #f5f8ff;
-  --card-border: rgba(0, 0, 0, 0.07);
-  --card-border-strong: rgba(0, 0, 0, 0.14);
-  --card-shadow-sm: 0 1px 3px rgba(15, 22, 60, 0.06), 0 1px 0 rgba(0, 0, 0, 0.04);
-  --card-shadow-md: 0 4px 16px rgba(15, 22, 60, 0.1), 0 1px 0 rgba(0, 0, 0, 0.05);
-  --card-shadow-lg: 0 12px 36px rgba(15, 22, 60, 0.14), 0 2px 0 rgba(0, 0, 0, 0.05);
+  --card-bg-hover: #f8fafc;
+  --card-border: #e2e8f0;
+  --card-border-strong: #cbd5e1;
+  --card-shadow-sm: 0 1px 3px rgba(15, 22, 60, 0.05), 0 1px 0 rgba(0, 0, 0, 0.02);
+  --card-shadow-md: 0 4px 16px rgba(15, 22, 60, 0.08), 0 1px 0 rgba(0, 0, 0, 0.03);
+  --card-shadow-lg: 0 12px 36px rgba(15, 22, 60, 0.12), 0 2px 0 rgba(0, 0, 0, 0.04);
 
-  --border-color: #dde1ed;
+  --border-color: #e2e8f0;
 
   /* Sidebar */
   --sidebar-bg: #ffffff;
-  --sidebar-border: #dde1ed;
+  --sidebar-border: #e2e8f0;
 }
 
 /* =====================================================
