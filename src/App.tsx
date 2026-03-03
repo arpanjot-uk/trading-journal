@@ -7,6 +7,7 @@ import { JournalView } from './pages/JournalView';
 import { CalendarPage } from './pages/CalendarPage';
 import { EmotionDashboard } from './pages/EmotionDashboard';
 import { StrategyAnalysis } from './pages/StrategyAnalysis';
+import { ToolsPage } from './pages/ToolsPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/strategy" element={<StrategyAnalysis />} />
           <Route path="/emotions" element={<EmotionDashboard />} />
+          <Route path="/tools" element={<ToolsPage />} />
         </Routes>
       </AppLayout>
       <Analytics />

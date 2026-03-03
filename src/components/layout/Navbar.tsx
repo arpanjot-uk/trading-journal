@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { db } from '../../db/db';
 import {
     TrendingUp, Settings, Moon, Sun, BookOpen, LayoutDashboard,
-    Calendar, Plus, Activity, Heart, ChevronRight, BarChart2
+    Calendar, Plus, Activity, Heart, ChevronRight, BarChart2, Calculator
 } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 import { AddTradeModal } from '../AddTradeModal';
@@ -46,6 +46,7 @@ export const Navbar: React.FC = () => {
         { path: '/calendar', label: 'Calendar', icon: <Calendar size={15} /> },
         { path: '/strategy', label: 'Strategies', icon: <BarChart2 size={15} /> },
         { path: '/emotions', label: 'Emotions', icon: <Heart size={15} /> },
+        { path: '/tools', label: 'Tools', icon: <Calculator size={15} /> },
     ];
 
     return (

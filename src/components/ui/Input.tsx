@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: React.ReactNode;
@@ -62,11 +62,12 @@ export const Input: React.FC<InputProps> = ({
     );
 };
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
     label?: React.ReactNode;
     error?: string;
     fullWidth?: boolean;
     options: { value: string | number; label: string }[];
+    onChange?: (e: any) => void;
 }
 
 export const Select: React.FC<SelectProps> = ({
@@ -75,63 +76,135 @@ export const Select: React.FC<SelectProps> = ({
     fullWidth = true,
     options,
     className = '',
-    style,          // ← pulled out so it goes to the container, not the <select>
+    style,
+    value,
+    onChange,
+    name,
     ...props
 }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const containerStyle: React.CSSProperties = {
         display: 'flex',
         flexDirection: 'column',
         gap: '0.4rem',
         width: fullWidth ? '100%' : 'auto',
         marginBottom: '1rem',
-        ...style,   // ← layout overrides live here
+        position: 'relative',
+        ...style,
     };
 
-    const inputStyle: React.CSSProperties = {
-        background: 'var(--bg-secondary)',
-        border: `1px solid ${error ? 'var(--loss-color)' : 'var(--border-color)'}`,
+    const triggerStyle: React.CSSProperties = {
+        background: isOpen ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+        border: `1px solid ${error ? 'var(--loss-color)' : isOpen ? 'var(--accent-primary)' : 'var(--border-color)'}`,
         borderRadius: 'var(--radius-sm)',
         padding: '0.6rem 0.8rem',
         color: 'var(--text-primary)',
         outline: 'none',
         transition: 'all var(--transition-fast)',
-        appearance: 'none',
         fontFamily: 'inherit',
         fontSize: '0.95rem',
-        backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'right 0.8rem top 50%',
-        backgroundSize: '0.65rem auto',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        cursor: 'pointer',
+        boxShadow: isOpen && !error ? '0 0 0 3px rgba(59, 130, 246, 0.12)' : 'none',
+        userSelect: 'none',
     };
 
+    const dropdownStyle: React.CSSProperties = {
+        position: 'absolute',
+        top: 'calc(100% + 4px)',
+        left: 0,
+        right: 0,
+        background: 'var(--bg-primary)',
+        border: '1px solid var(--border-color)',
+        borderRadius: 'var(--radius-md)',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+        zIndex: 50,
+        maxHeight: '260px',
+        overflowY: 'auto',
+        display: isOpen ? 'block' : 'none',
+        padding: '0.4rem',
+    };
+
+    const optionStyle = (isSelected: boolean): React.CSSProperties => ({
+        padding: '0.6rem 0.8rem',
+        cursor: 'pointer',
+        color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)',
+        background: isSelected ? 'var(--bg-tertiary)' : 'transparent',
+        fontSize: '0.95rem',
+        borderRadius: 'var(--radius-sm)',
+        transition: 'all var(--transition-fast)',
+        marginBottom: '2px',
+    });
+
+    const selectedOption = options.find(opt => String(opt.value) === String(value));
+
     return (
-        <div className={className} style={containerStyle}>
+        <div className={className} style={containerStyle} ref={containerRef}>
             {label && <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{label}</label>}
-            <select
-                style={inputStyle}
-                onFocus={(e) => {
-                    if (!error) {
-                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(140, 170, 238, 0.15)';
-                        e.currentTarget.style.background = 'var(--bg-primary)';
+
+            <div
+                style={triggerStyle}
+                onClick={() => setIsOpen(!isOpen)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsOpen(!isOpen);
+                    } else if (e.key === 'Escape') {
+                        setIsOpen(false);
                     }
                 }}
-                onBlur={(e) => {
-                    if (!error) {
-                        e.currentTarget.style.borderColor = 'var(--border-color)';
-                        e.currentTarget.style.boxShadow = 'none';
-                        e.currentTarget.style.background = 'var(--bg-secondary)';
-                    }
-                }}
-                {...props}
+                {...(props as any)}
             >
-                <option value="" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>Select an option</option>
+                <span style={{ color: selectedOption ? 'inherit' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {selectedOption ? selectedOption.label : 'Select an option'}
+                </span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', flexShrink: 0, marginLeft: '0.5rem', opacity: 0.6 }}>
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </div>
+
+            <div style={dropdownStyle} className="custom-scrollbar">
                 {options.map((opt) => (
-                    <option key={opt.value} value={opt.value} style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
+                    <div
+                        key={opt.value}
+                        style={optionStyle(String(opt.value) === String(value))}
+                        onMouseOver={(e) => {
+                            if (String(opt.value) !== String(value)) {
+                                e.currentTarget.style.background = 'var(--bg-secondary)';
+                            }
+                        }}
+                        onMouseOut={(e) => {
+                            if (String(opt.value) !== String(value)) {
+                                e.currentTarget.style.background = 'transparent';
+                            }
+                        }}
+                        onClick={() => {
+                            if (onChange) {
+                                onChange({ target: { value: opt.value.toString(), name } });
+                            }
+                            setIsOpen(false);
+                        }}
+                    >
                         {opt.label}
-                    </option>
+                    </div>
                 ))}
-            </select>
+            </div>
+
             {error && <span style={{ color: 'var(--loss-color)', fontSize: '0.75rem', fontWeight: 500 }}>{error}</span>}
         </div>
     );
