@@ -9,6 +9,7 @@ import { Modal } from '../components/ui/Modal';
 import { AddTradeModal } from '../components/AddTradeModal';
 import { DailyMoodModal } from '../components/DailyMoodModal';
 import { useJournalContext } from '../context/JournalContext';
+import { SEO } from '../components/SEO';
 
 type Tab = 'Trades' | 'Mood Tracker';
 
@@ -187,6 +188,7 @@ export const JournalView: React.FC = () => {
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
+            <SEO title={`${journal.name} Log | ArpanTrade`} description="Trade log and mood tracker." />
             {/* Header */}
             <div className="flex-between" style={{ marginBottom: '2rem', marginTop: '0.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <div>

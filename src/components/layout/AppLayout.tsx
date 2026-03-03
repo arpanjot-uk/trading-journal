@@ -1,8 +1,12 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { initializeSettings } from '../../db/db';
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const location = useLocation();
+    const isLandingPage = location.pathname === '/';
+
     useEffect(() => {
         // Ensure default settings exist on app load
         initializeSettings().catch(console.error);
@@ -11,6 +15,14 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
     }, []);
+
+    if (isLandingPage) {
+        return (
+            <div style={{ minHeight: '100vh', width: '100vw' }}>
+                {children}
+            </div>
+        );
+    }
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row' }}>

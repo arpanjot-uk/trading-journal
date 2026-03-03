@@ -4,6 +4,7 @@ import { Calendar } from 'lucide-react';
 import { db } from '../db/db';
 import { CalendarView } from '../components/CalendarView';
 import { useJournalContext } from '../context/JournalContext';
+import { SEO } from '../components/SEO';
 
 export const CalendarPage: React.FC = () => {
     const { activeJournalId } = useJournalContext();
@@ -24,6 +25,7 @@ export const CalendarPage: React.FC = () => {
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
+            <SEO title="Trading Calendar | ArpanTrade" description="Monthly view of your trading activity." />
             {/* Header */}
             <div style={{ marginBottom: '2rem', marginTop: '0.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>

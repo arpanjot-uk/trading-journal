@@ -15,6 +15,7 @@ import {
     TrendingUp, TrendingDown, AlertCircle, Target,
     Trophy, Layers, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -301,6 +302,7 @@ export const StrategyAnalysis: React.FC = () => {
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
+            <SEO title={`${journal?.name ?? 'Strategy Analysis'} | ArpanTrade`} description="Deep-dive into each strategy's performance, checklist compliance, and behavioural patterns." />
             {/* ── Header ── */}
             <div className="page-header">
                 <div>

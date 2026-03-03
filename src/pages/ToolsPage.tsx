@@ -3,6 +3,7 @@ import { Calculator } from 'lucide-react';
 import { LotSizeCalculator } from '../components/tools/LotSizeCalculator';
 import { RiskCalculator } from '../components/tools/RiskCalculator';
 import { PropFirmCalculator } from '../components/tools/PropFirmCalculator';
+import { SEO } from '../components/SEO';
 
 type ToolTab = 'Lot Size' | 'Risk & Drawdown' | 'Prop Firm';
 
@@ -13,6 +14,7 @@ export const ToolsPage: React.FC = () => {
 
     return (
         <div style={{ paddingBottom: '2rem' }}>
+            <SEO title="Trading Tools | ArpanTrade" description="Advanced calculators for risk management and prop firm challenges." />
             <div style={{ marginBottom: '2rem', marginTop: '0.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
                     <div style={{ background: 'linear-gradient(135deg, var(--accent-primary), #8b5cf6)', padding: '0.45rem', borderRadius: '8px', display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px var(--accent-glow)' }}>

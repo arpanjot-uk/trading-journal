@@ -1,7 +1,9 @@
 import { Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
+import { HelmetProvider } from 'react-helmet-async';
 import { AppLayout } from './components/layout/AppLayout';
-import { Home } from './pages/Home';
+import { LandingPage } from './pages/LandingPage';
+import { Journals } from './pages/Journals';
 import { Dashboard } from './pages/Dashboard';
 import { JournalView } from './pages/JournalView';
 import { CalendarPage } from './pages/CalendarPage';
@@ -11,10 +13,11 @@ import { ToolsPage } from './pages/ToolsPage';
 
 function App() {
   return (
-    <>
+    <HelmetProvider>
       <AppLayout>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/journal" element={<Journals />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/log" element={<JournalView />} />
           <Route path="/calendar" element={<CalendarPage />} />
@@ -24,7 +27,7 @@ function App() {
         </Routes>
       </AppLayout>
       <Analytics />
-    </>
+    </HelmetProvider>
   );
 }
 

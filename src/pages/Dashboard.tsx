@@ -15,6 +15,7 @@ import { useMetrics } from '../hooks/useMetrics';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useJournalContext } from '../context/JournalContext';
+import { SEO } from '../components/SEO';
 
 type Tab = 'Advanced' | 'Trades' | 'Strategies' | 'Hourly' | 'Daily' | 'Duration' | 'Drawdown';
 type DateRange = 'all' | 'month' | 'week';
@@ -127,6 +128,7 @@ export const Dashboard: React.FC = () => {
 
     return (
         <div>
+            <SEO title={`${journal.name} Dashboard | ArpanTrade`} description="Performance analytics and trade statistics." />
             {/* ── HEADER ── */}
             <div style={{ marginBottom: '2rem', marginTop: '0.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>

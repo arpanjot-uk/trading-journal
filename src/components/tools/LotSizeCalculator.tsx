@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Card } from '../ui/Card';
 import { Input, Select } from '../ui/Input';
-import { Button } from '../ui/Button';
 import { Calculator, AlertTriangle } from 'lucide-react';
 
 const ASSET_TYPES = [

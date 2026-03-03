@@ -7,8 +7,9 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { useJournalContext } from '../context/JournalContext';
+import { SEO } from '../components/SEO';
 
-export const Home: React.FC = () => {
+export const Journals: React.FC = () => {
     const navigate = useNavigate();
     const journals = useLiveQuery(() => db.journals.toArray());
     const { activeJournalId, setActiveJournalId } = useJournalContext();
@@ -119,6 +120,7 @@ export const Home: React.FC = () => {
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
+            <SEO title="Journals | ArpanTrade" description="Select or create a trading journal to track your performance." />
             {/* Header */}
             <div className="flex-between" style={{ marginBottom: '2.25rem', marginTop: '1rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <div>

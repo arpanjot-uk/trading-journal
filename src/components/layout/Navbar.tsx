@@ -41,7 +41,7 @@ export const Navbar: React.FC = () => {
     };
 
     const navLinks = [
-        { path: '/', label: 'Journals', icon: <BookOpen size={15} />, exact: true },
+        { path: '/journal', label: 'Journals', icon: <BookOpen size={15} />, exact: true },
         { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={15} /> },
         { path: '/calendar', label: 'Calendar', icon: <Calendar size={15} /> },
         { path: '/strategy', label: 'Strategies', icon: <BarChart2 size={15} /> },
@@ -89,7 +89,7 @@ export const Navbar: React.FC = () => {
                     <TrendingUp size={16} color="#fff" />
                 </div>
                 <div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1 }}>TradeJournal</div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1 }}>ArpanTrade</div>
                     <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: 1 }}>Performance Analytics</div>
                 </div>
             </Link>

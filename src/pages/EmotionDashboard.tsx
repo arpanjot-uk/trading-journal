@@ -15,6 +15,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useJournalContext } from '../context/JournalContext';
 import { useEmotionMetrics } from '../hooks/useEmotionMetrics';
+import { SEO } from '../components/SEO';
 
 // --- Helpers ---
 const MOOD_COLORS: Record<number, string> = {
@@ -148,6 +149,7 @@ export const EmotionDashboard: React.FC = () => {
 
     return (
         <div>
+            <SEO title="Emotion Analytics | ArpanTrade" description="Understand how your emotions and lifestyle impact trading performance." />
             {/* ---- Header ---- */}
             <div style={{ marginBottom: '2rem', marginTop: '0.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
