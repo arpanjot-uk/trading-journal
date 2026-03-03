@@ -39,6 +39,9 @@ interface StrategyStats {
     netLoss: number;
     netPnl: number;
     avgRr: number;
+    expectedValue: number;
+    profitFactor: number | null;
+    maxDrawdown: number;
     equityCurve: { date: string; equity: number }[];
     pairData: Record<string, { trades: number; won: number; pnl: number }>;
     dirData: { Buy: { trades: number; won: number; pnl: number }; Sell: { trades: number; won: number; pnl: number } };
@@ -46,6 +49,11 @@ interface StrategyStats {
     checklistStats: ChecklistItemStat[];
     complianceRate: number; // % of checklist items that were ticked across all trades
     fullCompliance: number; // # of trades where ALL items were ticked
+    fullComplianceWins: number;
+    partialComplianceTrades: number;
+    partialComplianceWins: number;
+    totalChecklistSteps: number;
+    avgTicksPerTrade: number;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -86,6 +94,7 @@ function computeStrategyStats(
     let grossProfit = 0, netLoss = 0, netPnl = 0, rrSum = 0;
     let won = 0, lost = 0, breakEven = 0;
     let totalChecked = 0, totalPossible = 0, fullCompliance = 0;
+    let fullComplianceWins = 0, partialComplianceTrades = 0, partialComplianceWins = 0;
     let balance = startingBalance;
     const equityCurveMap = new Map<string, number>();
 
@@ -151,27 +160,57 @@ function computeStrategyStats(
                 }
                 checkMap.set(question, stat);
             });
-            if (tradeTotal > 0 && tradeCheckedAll) fullCompliance++;
+            if (tradeTotal > 0) {
+                if (tradeCheckedAll) {
+                    fullCompliance++;
+                    if (t.result === 'Win') fullComplianceWins++;
+                } else {
+                    partialComplianceTrades++;
+                    if (t.result === 'Win') partialComplianceWins++;
+                }
+            }
         }
     });
 
+    let peak = startingBalance;
+    let maxDrawdown = 0;
     const equityCurve: { date: string; equity: number }[] = [
         { date: 'Start', equity: startingBalance }
     ];
-    equityCurveMap.forEach((equity, date) => equityCurve.push({ date, equity }));
+    equityCurveMap.forEach((equity, date) => {
+        equityCurve.push({ date, equity });
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDrawdown) maxDrawdown = dd;
+    });
 
     const dayData = DAYS.map(day => ({ day, ...dayMap[day] }));
+
+    const winRate = trades.length > 0 ? won / trades.length : 0;
+    const lossRate = trades.length > 0 ? lost / trades.length : 0;
+    const avgWin = won > 0 ? grossProfit / won : 0;
+    const avgLoss = lost > 0 ? netLoss / lost : 0;
+    const expectedValue = (winRate * avgWin) - (lossRate * avgLoss);
+    const profitFactor = netLoss > 0 ? grossProfit / netLoss : (grossProfit > 0 ? 999 : null);
 
     return {
         trades: trades.length,
         won, lost, breakEven,
         grossProfit, netLoss, netPnl,
         avgRr: trades.length > 0 ? rrSum / trades.length : 0,
+        expectedValue,
+        profitFactor,
+        maxDrawdown: maxDrawdown * 100,
         equityCurve,
         pairData, dirData, dayData,
         checklistStats: Array.from(checkMap.values()),
         complianceRate: totalPossible > 0 ? (totalChecked / totalPossible) * 100 : 0,
-        fullCompliance
+        fullCompliance,
+        fullComplianceWins,
+        partialComplianceTrades,
+        partialComplianceWins,
+        totalChecklistSteps: allQuestions.length,
+        avgTicksPerTrade: trades.length > 0 ? (totalPossible > 0 ? totalChecked / trades.length : 0) : 0
     };
 }
 
