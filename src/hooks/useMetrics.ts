@@ -29,7 +29,7 @@ export const useMetrics = (journalId: number) => {
         const strategiesMap = new Map<string, { trades: number, pnl: number, won: number, grossProfit: number, netLoss: number, rrSum: number }>();
 
         // Aggregate equity by calendar day (prevents per-trade noise in growth chart)
-        const dailyEquityMap = new Map<string, { date: string, equity: number, profit: number }>();
+        const dailyEquityMap = new Map<string, { date: string, rawDate: string, equity: number, profit: number }>();
         const hourlyMap = new Array(24).fill(0).map((_, h) => ({ hour: `${h}:00`, Winners: 0, Losers: 0 }));
         const dailyMap = new Array(7).fill(0).map((_, d) => ({ day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d], Winners: 0, Losers: 0 }));
         const durationData: { Duration: number, Growth: number, Result: string }[] = [];
@@ -73,7 +73,8 @@ export const useMetrics = (journalId: number) => {
 
             if (t.result === 'Win') {
                 totalWon++;
-                grossProfit += t.netPnl;
+                // Use gross pnl for grossProfit so Profit Factor = gross/gross
+                grossProfit += t.pnl > 0 ? t.pnl : t.netPnl;
             } else if (t.result === 'Loss') {
                 totalLost++;
                 // Use gross pnl (absolute) when available, fall back to netPnl
@@ -149,7 +150,7 @@ export const useMetrics = (journalId: number) => {
             sData.trades++;
             sData.pnl += t.netPnl;
             sData.rrSum += t.rr;
-            if (t.result === 'Win') { sData.won++; sData.grossProfit += t.netPnl; }
+            if (t.result === 'Win') { sData.won++; sData.grossProfit += t.pnl > 0 ? t.pnl : t.netPnl; }
             if (t.result === 'Loss') sData.netLoss += Math.abs(t.netPnl);
 
             // Date parsing for charts
@@ -162,7 +163,7 @@ export const useMetrics = (journalId: number) => {
                 existing.equity = balance;
                 existing.profit += t.netPnl;
             } else {
-                dailyEquityMap.set(dateKey, { date: dateKey, equity: balance, profit: t.netPnl });
+                dailyEquityMap.set(dateKey, { date: dateKey, rawDate: format(d, 'yyyy-MM-dd'), equity: balance, profit: t.netPnl });
             }
 
             // Hourly Map
@@ -225,8 +226,8 @@ export const useMetrics = (journalId: number) => {
         ];
 
         // Build growth data from aggregated daily map
-        const growthData: { date: string, equity: number, profit: number }[] = [];
-        if (trades.length > 0) growthData.push({ date: 'Start', equity: startingBalance, profit: 0 });
+        const growthData: { date: string, rawDate: string, equity: number, profit: number }[] = [];
+        if (trades.length > 0) growthData.push({ date: 'Start', rawDate: trades[0].openDate.slice(0, 10), equity: startingBalance, profit: 0 });
         growthData.push(...Array.from(dailyEquityMap.values()));
 
         // Strategy performance data

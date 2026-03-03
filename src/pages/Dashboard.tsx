@@ -83,9 +83,15 @@ export const Dashboard: React.FC = () => {
         const cutoff = dateRange === 'week'
             ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7)
             : new Date(now.getFullYear(), now.getMonth(), 1);
-        const cutoffStr = `${cutoff.toLocaleString('default', { month: 'short' })} ${String(cutoff.getDate()).padStart(2, '0')}`;
-        const idx = charts.growthData.findIndex(d => d.date >= cutoffStr);
-        return idx >= 1 ? charts.growthData.slice(idx - 1) : charts.growthData;
+        // Use ISO cutoff string for reliable comparison against rawDate
+        const cutoffISO = cutoff.toISOString().slice(0, 10);
+        const startPoint = charts.growthData[0]; // always include the 'Start' baseline
+        const filtered = charts.growthData.filter(d => d.rawDate >= cutoffISO);
+        // Always prepend Start point so the chart has a baseline
+        if (filtered.length > 0 && startPoint && startPoint.date === 'Start') {
+            return [startPoint, ...filtered];
+        }
+        return filtered.length > 0 ? filtered : charts.growthData;
     }, [charts?.growthData, dateRange]);
 
     // ---- Drawdown curve data ----
