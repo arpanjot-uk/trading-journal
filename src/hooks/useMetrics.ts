@@ -21,14 +21,16 @@ export const useMetrics = (journalId: number) => {
         let totalGrossPnl = 0;
         let totalLots = 0;
 
-        let grossProfit = 0;
-        let grossLoss = 0;
+        let grossProfit = 0;  // sum of netPnl on wins (for win avg)
+        let grossLoss = 0;    // sum of abs(t.pnl) on losses — true gross loss
+        let netLoss = 0;      // sum of abs(t.netPnl) on losses — for expectancy
 
         const pairsMap = new Map<string, { trades: number, pnl: number, hw: number, sw: number, hwTotal: number, swTotal: number, pips: number }>();
+        const strategiesMap = new Map<string, { trades: number, pnl: number, won: number, grossProfit: number, netLoss: number, rrSum: number }>();
 
-        // Chart Data Arrays
-        const growthData: { date: string, equity: number, profit: number }[] = [];
-        const hourlyMap = new Array(24).fill(0).map((_, h) => ({ hour: `${h}`, Winners: 0, Losers: 0 }));
+        // Aggregate equity by calendar day (prevents per-trade noise in growth chart)
+        const dailyEquityMap = new Map<string, { date: string, equity: number, profit: number }>();
+        const hourlyMap = new Array(24).fill(0).map((_, h) => ({ hour: `${h}:00`, Winners: 0, Losers: 0 }));
         const dailyMap = new Array(7).fill(0).map((_, d) => ({ day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d], Winners: 0, Losers: 0 }));
         const durationData: { Duration: number, Growth: number, Result: string }[] = [];
 
@@ -40,8 +42,8 @@ export const useMetrics = (journalId: number) => {
         let maxConsecutiveWins = 0;
         let currentConsecutiveLosses = 0;
         let maxConsecutiveLosses = 0;
-        let maxConsecutiveProfit = 0; // Total profit during max win streak
-        let maxConsecutiveLoss = 0; // Total loss during max loss streak
+        let maxConsecutiveProfit = 0;
+        let maxConsecutiveLoss = 0;
         let currentStreakProfit = 0;
         let currentStreakLoss = 0;
 
@@ -52,11 +54,7 @@ export const useMetrics = (journalId: number) => {
 
         let totalDuration = 0;
 
-        // Add initial balance to growth chart
-        if (trades.length > 0) {
-            growthData.push({ date: 'Start', equity: balance, profit: 0 });
-            // B6 fix: initialize safely from sentinels, not from potentially undefined trades[0].netPnl
-        } else {
+        if (trades.length === 0) {
             bestTrade = 0;
             worstTrade = 0;
         }
@@ -78,7 +76,9 @@ export const useMetrics = (journalId: number) => {
                 grossProfit += t.netPnl;
             } else if (t.result === 'Loss') {
                 totalLost++;
-                grossLoss += Math.abs(t.netPnl);
+                // Use gross pnl (absolute) when available, fall back to netPnl
+                grossLoss += t.pnl < 0 ? Math.abs(t.pnl) : Math.abs(t.netPnl);
+                netLoss += Math.abs(t.netPnl);
             }
 
             // Advanced Metrics Logic
@@ -94,24 +94,19 @@ export const useMetrics = (journalId: number) => {
                 if (t.result === 'Win') shortWon++;
             }
 
-            // Streak Logic (must be sequential by date, assuming trades are sorted ascending)
+            // Streak Logic (trades sorted ascending by openDate)
             if (t.result === 'Win') {
                 currentConsecutiveWins++;
                 currentStreakProfit += t.netPnl;
-
-                // Break loss streak
                 if (currentConsecutiveLosses > maxConsecutiveLosses) {
                     maxConsecutiveLosses = currentConsecutiveLosses;
-                    maxConsecutiveLoss = Math.abs(currentStreakLoss); // B7 fix: store as positive
+                    maxConsecutiveLoss = Math.abs(currentStreakLoss);
                 }
                 currentConsecutiveLosses = 0;
                 currentStreakLoss = 0;
-
             } else if (t.result === 'Loss') {
                 currentConsecutiveLosses++;
                 currentStreakLoss += t.netPnl;
-
-                // Break win streak
                 if (currentConsecutiveWins > maxConsecutiveWins) {
                     maxConsecutiveWins = currentConsecutiveWins;
                     maxConsecutiveProfit = currentStreakProfit;
@@ -119,14 +114,14 @@ export const useMetrics = (journalId: number) => {
                 currentConsecutiveWins = 0;
                 currentStreakProfit = 0;
             } else {
-                // Break both streaks on break even
+                // Break Even — resets both streaks
                 if (currentConsecutiveWins > maxConsecutiveWins) {
                     maxConsecutiveWins = currentConsecutiveWins;
                     maxConsecutiveProfit = currentStreakProfit;
                 }
                 if (currentConsecutiveLosses > maxConsecutiveLosses) {
                     maxConsecutiveLosses = currentConsecutiveLosses;
-                    maxConsecutiveLoss = Math.abs(currentStreakLoss); // B7 fix
+                    maxConsecutiveLoss = Math.abs(currentStreakLoss);
                 }
                 currentConsecutiveWins = 0;
                 currentStreakProfit = 0;
@@ -146,10 +141,29 @@ export const useMetrics = (journalId: number) => {
                 pData.swTotal++;
                 if (t.result === 'Win') pData.sw++;
             }
-            pData.pips += (t.result === 'Win' ? t.tp : -t.sl); // approximation
+            pData.pips += (t.result === 'Win' ? t.tp : -t.sl);
+
+            // Strategy Map (new — per-strategy breakdown)
+            if (!strategiesMap.has(t.strategy)) strategiesMap.set(t.strategy, { trades: 0, pnl: 0, won: 0, grossProfit: 0, netLoss: 0, rrSum: 0 });
+            const sData = strategiesMap.get(t.strategy)!;
+            sData.trades++;
+            sData.pnl += t.netPnl;
+            sData.rrSum += t.rr;
+            if (t.result === 'Win') { sData.won++; sData.grossProfit += t.netPnl; }
+            if (t.result === 'Loss') sData.netLoss += Math.abs(t.netPnl);
 
             // Date parsing for charts
             const d = parseISO(t.openDate);
+            const dateKey = format(d, 'MMM dd');
+
+            // Aggregate equity by day — only store the final equity for each day
+            const existing = dailyEquityMap.get(dateKey);
+            if (existing) {
+                existing.equity = balance;
+                existing.profit += t.netPnl;
+            } else {
+                dailyEquityMap.set(dateKey, { date: dateKey, equity: balance, profit: t.netPnl });
+            }
 
             // Hourly Map
             const h = getHours(d);
@@ -161,18 +175,11 @@ export const useMetrics = (journalId: number) => {
             if (t.result === 'Win') dailyMap[day].Winners++;
             else if (t.result === 'Loss') dailyMap[day].Losers++;
 
-            // Duration Data (convert growth strictly relative to starting balance for simple metric)
+            // Duration Data
             durationData.push({
                 Duration: t.duration,
                 Growth: +(t.netPnl / startingBalance).toFixed(4),
                 Result: t.result
-            });
-
-            // Growth Data
-            growthData.push({
-                date: format(d, 'MMM dd'),
-                equity: balance,
-                profit: t.netPnl
             });
         });
 
@@ -183,7 +190,7 @@ export const useMetrics = (journalId: number) => {
         }
         if (currentConsecutiveLosses > maxConsecutiveLosses) {
             maxConsecutiveLosses = currentConsecutiveLosses;
-            maxConsecutiveLoss = Math.abs(currentStreakLoss); // B7 fix
+            maxConsecutiveLoss = Math.abs(currentStreakLoss);
         }
 
         const totalTrades = trades.length;
@@ -191,30 +198,46 @@ export const useMetrics = (journalId: number) => {
         const lossRate = totalTrades ? (totalLost / totalTrades) * 100 : 0;
         const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? 999 : 0);
         const avgWin = totalWon ? grossProfit / totalWon : 0;
-        const avgLoss = totalLost ? grossLoss / totalLost : 0;
+        const avgLoss = totalLost ? netLoss / totalLost : 0;
         const expectancy = (winRate / 100 * avgWin) - ((1 - winRate / 100) * avgLoss);
         const avgDuration = totalTrades ? totalDuration / totalTrades : 0;
 
         const gain = ((balance - startingBalance) / startingBalance) * 100;
+        const hasEnoughData = totalTrades >= 10;
 
         // Compute Scores for Radar Chart (0-100 scale)
         const scoreWinPct = winRate;
         const scoreProfitFactor = Math.min(100, (profitFactor / 3) * 100);
         const scoreAvgWinLoss = Math.min(100, ((avgWin / (avgLoss || 1)) / 3) * 100);
         const scoreRecoveryFactor = Math.min(100, (totalPnl > 0 && maxDrawdown > 0 ? (gain / maxDrawdown) * 20 : totalPnl > 0 ? 100 : 0));
-        const scoreMaxDrawdown = Math.max(0, 100 - (maxDrawdown * 4)); // 25% drawdown = 0 score
+        const scoreMaxDrawdown = Math.max(0, 100 - (maxDrawdown * 4));
         const scoreConsistency = Math.max(0, 100 - (maxConsecutiveLosses * 5));
 
         const scoreOverview = (scoreWinPct + scoreProfitFactor + scoreAvgWinLoss + scoreRecoveryFactor + scoreMaxDrawdown + scoreConsistency) / 6;
 
         const scoreData = [
-            { subject: 'Win %', A: scoreWinPct },
-            { subject: 'Profit factor', A: scoreProfitFactor },
-            { subject: 'Avg win/loss', A: scoreAvgWinLoss },
-            { subject: 'Recovery factor', A: scoreRecoveryFactor },
-            { subject: 'Max drawdown', A: scoreMaxDrawdown },
-            { subject: 'Consistency', A: scoreConsistency },
+            { subject: 'Win %', A: scoreWinPct, description: 'Percentage of winning trades' },
+            { subject: 'Profit factor', A: scoreProfitFactor, description: 'Gross profit ÷ gross loss (capped at 3.0 → 100%)' },
+            { subject: 'Avg win/loss', A: scoreAvgWinLoss, description: 'Average win ÷ average loss (capped at 3× → 100%)' },
+            { subject: 'Recovery', A: scoreRecoveryFactor, description: 'Account gain% normalised against max drawdown' },
+            { subject: 'Drawdown', A: scoreMaxDrawdown, description: 'Max drawdown penalty: 25%+ drawdown = score 0' },
+            { subject: 'Consistency', A: scoreConsistency, description: 'Loss streak penalty: 5 pts per streak trade' },
         ];
+
+        // Build growth data from aggregated daily map
+        const growthData: { date: string, equity: number, profit: number }[] = [];
+        if (trades.length > 0) growthData.push({ date: 'Start', equity: startingBalance, profit: 0 });
+        growthData.push(...Array.from(dailyEquityMap.values()));
+
+        // Strategy performance data
+        const strategiesData = Array.from(strategiesMap.entries()).map(([name, data]) => ({
+            name,
+            trades: data.trades,
+            winRate: data.trades > 0 ? +((data.won / data.trades) * 100).toFixed(1) : 0,
+            pnl: +data.pnl.toFixed(2),
+            profitFactor: data.netLoss > 0 ? +(data.grossProfit / data.netLoss).toFixed(2) : (data.grossProfit > 0 ? 999 : 0),
+            avgRr: data.trades > 0 ? +(data.rrSum / data.trades).toFixed(2) : 0,
+        }));
 
         return {
             loading: false,
@@ -239,6 +262,7 @@ export const useMetrics = (journalId: number) => {
                 totalGrossPnl,
                 grossProfit,
                 grossLoss,
+                netLoss,
                 bestTrade,
                 worstTrade,
                 maxConsecutiveWins,
@@ -249,7 +273,8 @@ export const useMetrics = (journalId: number) => {
                 shortTrades,
                 longWon,
                 shortWon,
-                scoreOverview
+                scoreOverview,
+                hasEnoughData,
             },
             charts: {
                 growthData,
@@ -257,7 +282,8 @@ export const useMetrics = (journalId: number) => {
                 dailyMap,
                 durationData,
                 pairsData: Array.from(pairsMap.entries()).map(([currency, data]) => ({ currency, ...data })),
-                scoreData
+                scoreData,
+                strategiesData,
             }
         };
     }, [journal, trades]);

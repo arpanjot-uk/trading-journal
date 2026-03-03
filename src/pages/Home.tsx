@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus, BookOpen, TrendingUp, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, BookOpen, TrendingUp, Edit2, Trash2 } from 'lucide-react';
 import { db, type Journal } from '../db/db';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
@@ -120,95 +119,148 @@ export const Home: React.FC = () => {
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
-            <div className="flex-between" style={{ marginBottom: '2rem', marginTop: '1rem' }}>
+            {/* Header */}
+            <div className="flex-between" style={{ marginBottom: '2.25rem', marginTop: '1rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <div>
-                    <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Your Journals</h1>
-                    <p className="text-secondary">Select a trading journal or create a new one to start logging.</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
+                        <div style={{ background: 'linear-gradient(135deg, #4f7cf6, #7c3aed)', padding: '0.45rem', borderRadius: '8px', display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(79,124,246,0.3)' }}>
+                            <BookOpen size={18} color="#fff" />
+                        </div>
+                        <h1 style={{ fontSize: '1.65rem', margin: 0 }}>Trading Journals</h1>
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Select or create a journal to start logging your trades.</p>
                 </div>
-                <Button onClick={openCreate} icon={<Plus size={18} />}>
+                <button
+                    onClick={openCreate}
+                    style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
+                        padding: '0.6rem 1.1rem',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'linear-gradient(135deg, var(--accent-primary), #6366f1)',
+                        color: '#fff',
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        border: 'none',
+                        boxShadow: '0 4px 14px var(--accent-glow)',
+                        cursor: 'pointer',
+                        transition: 'all var(--transition-fast)',
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px var(--accent-glow)'; }}
+                    onMouseOut={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 14px var(--accent-glow)'; }}
+                >
+                    <Plus size={16} />
                     New Journal
-                </Button>
+                </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
                 {journals?.map(journal => {
                     const isActive = activeJournalId === journal.id;
                     return (
-                        <Card
+                        <div
                             key={journal.id}
                             onClick={() => handleSelectJournal(journal.id as number)}
                             style={{
                                 cursor: 'pointer',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: '1rem',
-                                border: isActive ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                gap: '0',
+                                border: isActive ? '1.5px solid var(--accent-primary)' : '1px solid var(--card-border)',
+                                borderRadius: 'var(--radius-md)',
                                 position: 'relative',
-                                background: isActive ? 'linear-gradient(180deg, rgba(59, 130, 246, 0.05) 0%, rgba(30, 41, 59, 0) 100%)' : 'var(--bg-secondary)',
-                                transition: 'all 0.2s ease'
+                                background: 'var(--card-bg)',
+                                boxShadow: isActive ? '0 0 0 3px var(--accent-glow), var(--card-shadow-md)' : 'var(--card-shadow-sm)',
+                                transition: 'all var(--transition-fast)',
+                                overflow: 'hidden',
                             }}
+                            onMouseOver={e => { if (!isActive) { e.currentTarget.style.boxShadow = 'var(--card-shadow-md)'; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
+                            onMouseOut={e => { if (!isActive) { e.currentTarget.style.boxShadow = 'var(--card-shadow-sm)'; e.currentTarget.style.transform = 'none'; } }}
                         >
-                            {isActive && (
-                                <div style={{ position: 'absolute', top: '-10px', right: '-10px', background: 'var(--bg-primary)', borderRadius: '50%', padding: '2px' }}>
-                                    <CheckCircle2 size={24} className="text-gradient" />
-                                </div>
-                            )}
+                            {/* Top accent bar */}
+                            <div style={{ height: '3px', background: isActive ? 'linear-gradient(90deg, var(--accent-primary), #7c3aed)' : 'var(--card-border)', transition: 'background var(--transition-fast)' }} />
 
-                            <div className="flex-between">
-                                <div className="flex-center" style={{ gap: '0.75rem' }}>
-                                    <div style={{ background: 'var(--bg-tertiary)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
-                                        <BookOpen size={24} className={isActive ? "text-gradient" : "text-muted"} />
+                            <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+                                {/* Card header */}
+                                <div className="flex-between">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{
+                                            background: isActive ? 'linear-gradient(135deg, #4f7cf6, #7c3aed)' : 'var(--bg-tertiary)',
+                                            padding: '0.6rem',
+                                            borderRadius: 'var(--radius-sm)',
+                                            display: 'flex',
+                                            boxShadow: isActive ? '0 4px 10px var(--accent-glow)' : 'none',
+                                            transition: 'all var(--transition-fast)',
+                                        }}>
+                                            <BookOpen size={18} color={isActive ? '#fff' : 'var(--text-muted)'} />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '-0.01em' }}>{journal.name}</div>
+                                            {isActive && <span className="badge badge-accent" style={{ marginTop: '0.2rem', display: 'inline-flex' }}>Active</span>}
+                                        </div>
                                     </div>
-                                    <h3 style={{ margin: 0 }}>{journal.name}</h3>
+                                    <div style={{ display: 'flex', gap: '0.15rem' }}>
+                                        <button
+                                            onClick={(e) => openEdit(e, journal)}
+                                            style={{ padding: '0.4rem', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', transition: 'all var(--transition-fast)' }}
+                                            onMouseOver={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                                            onMouseOut={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                                        >
+                                            <Edit2 size={15} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => openDelete(e, journal)}
+                                            style={{ padding: '0.4rem', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', transition: 'all var(--transition-fast)' }}
+                                            onMouseOver={e => { e.currentTarget.style.color = 'var(--loss-color)'; e.currentTarget.style.background = 'var(--loss-bg)'; }}
+                                            onMouseOut={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                                        >
+                                            <Trash2 size={15} />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                    <button
-                                        onClick={(e) => openEdit(e, journal)}
-                                        style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}
-                                        onMouseOver={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-                                    >
-                                        <Edit2 size={18} />
-                                    </button>
-                                    <button
-                                        onClick={(e) => openDelete(e, journal)}
-                                        style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}
-                                        onMouseOver={e => e.currentTarget.style.color = 'var(--loss-color)'}
-                                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </div>
 
-                            <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <span className="text-secondary" style={{ fontSize: '0.875rem' }}>Starting Balance</span>
-                                    <p style={{ fontWeight: 600, fontSize: '1.25rem' }}>${journal.startingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                                </div>
-                                <div style={{ color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
-                                    <TrendingUp size={24} />
+                                {/* Balance stat */}
+                                <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Starting Balance</div>
+                                        <div style={{ fontWeight: 700, fontSize: '1.2rem', letterSpacing: '-0.02em' }}>
+                                            ${journal.startingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                        </div>
+                                    </div>
+                                    <div style={{ color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)', opacity: isActive ? 1 : 0.4, transition: 'all var(--transition-fast)' }}>
+                                        <TrendingUp size={20} />
+                                    </div>
                                 </div>
                             </div>
-                        </Card>
+                        </div>
                     );
                 })}
 
                 {!journals?.length && (
                     <div
-                        className="flex-center glass-panel"
                         style={{
                             gridColumn: '1 / -1',
-                            padding: '4rem 2rem',
+                            display: 'flex',
                             flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '4rem 2rem',
                             gap: '1rem',
-                            borderStyle: 'dashed',
-                            background: 'transparent'
+                            background: 'var(--card-bg)',
+                            border: '1.5px dashed var(--border-color)',
+                            borderRadius: 'var(--radius-lg)',
                         }}
                     >
-                        <BookOpen size={48} className="text-muted" />
-                        <h3 className="text-muted">No Journals Found</h3>
-                        <Button variant="secondary" onClick={openCreate}>Create your first journal</Button>
+                        <div style={{ background: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '0.5rem' }}>
+                            <BookOpen size={36} color="var(--text-muted)" />
+                        </div>
+                        <h3 style={{ margin: 0, color: 'var(--text-secondary)' }}>No journals yet</h3>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0, textAlign: 'center' }}>Create your first trading journal to start tracking your performance.</p>
+                        <button
+                            onClick={openCreate}
+                            style={{ marginTop: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--accent-primary), #6366f1)', color: '#fff', fontWeight: 600, fontSize: '0.875rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px var(--accent-glow)' }}
+                        >
+                            <Plus size={16} /> Create First Journal
+                        </button>
                     </div>
                 )}
             </div>

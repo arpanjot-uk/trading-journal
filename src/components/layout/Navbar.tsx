@@ -3,7 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
 import { db } from '../../db/db';
-import { LineChart, Settings, Moon, Sun, BookOpen, LayoutDashboard, Calendar, Plus, Activity } from 'lucide-react';
+import {
+    TrendingUp, Settings, Moon, Sun, BookOpen, LayoutDashboard,
+    Calendar, Plus, Activity, Heart, ChevronRight
+} from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 import { AddTradeModal } from '../AddTradeModal';
 import { DailyMoodModal } from '../DailyMoodModal';
@@ -13,7 +16,7 @@ export const Navbar: React.FC = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
     const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
-    const [theme, setTheme] = useState('dark'); // B5 fix: default matches CSS :root (dark)
+    const [theme, setTheme] = useState('dark');
     const location = useLocation();
     const { activeJournalId } = useJournalContext();
 
@@ -38,151 +41,238 @@ export const Navbar: React.FC = () => {
     };
 
     const navLinks = [
-        { path: '/', label: 'Journals', icon: <BookOpen size={16} /> },
-        { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
-        { path: '/calendar', label: 'Calendar', icon: <Calendar size={16} /> },
+        { path: '/', label: 'Journals', icon: <BookOpen size={15} />, exact: true },
+        { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={15} /> },
+        { path: '/calendar', label: 'Calendar', icon: <Calendar size={15} /> },
+        { path: '/emotions', label: 'Emotions', icon: <Heart size={15} /> },
     ];
-
-    const navItemBase: React.CSSProperties = {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.625rem',
-        padding: '0.55rem 0.75rem',
-        borderRadius: 'var(--radius-md)',
-        fontWeight: 500,
-        fontSize: '0.875rem',
-        transition: 'all var(--transition-fast)',
-        width: '100%',
-    };
 
     return (
         <nav style={{
-            width: '240px',
-            minWidth: '240px',
-            background: 'var(--bg-secondary)',
-            borderRight: '1px solid var(--border-color)',
+            width: '220px',
+            minWidth: '220px',
+            background: 'var(--sidebar-bg)',
+            borderRight: '1px solid var(--sidebar-border)',
             display: 'flex',
             flexDirection: 'column',
             height: '100vh',
-            padding: '1.5rem 1rem',
+            padding: '1.25rem 0.875rem',
             position: 'sticky',
             top: 0,
-            transition: 'background-color var(--transition-normal), border-color var(--transition-normal)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            transition: 'background-color var(--transition-normal)',
         }}>
             {/* Logo */}
             <Link to="/" style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.625rem',
+                gap: '0.6rem',
                 color: 'var(--text-primary)',
-                marginBottom: '2rem',
-                padding: '0 0.25rem',
+                marginBottom: '1.75rem',
+                padding: '0.25rem 0.375rem',
                 textDecoration: 'none',
+                borderRadius: 'var(--radius-sm)',
             }}>
                 <div style={{
-                    background: 'var(--accent-primary)',
+                    background: 'linear-gradient(135deg, #4f7cf6, #7c3aed)',
                     padding: '0.45rem',
-                    borderRadius: 'var(--radius-sm)',
+                    borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(79,124,246,0.35)',
                 }}>
-                    <LineChart size={18} color="#fff" />
+                    <TrendingUp size={16} color="#fff" />
                 </div>
-                <span style={{ fontSize: '0.95rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Arpan Journal</span>
+                <div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1 }}>TradeJournal</div>
+                    <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: 1 }}>Performance Analytics</div>
+                </div>
             </Link>
 
             {/* CTA Buttons */}
-            {activeJournalId ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            {activeJournalId && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1.5rem' }}>
                     <button
                         onClick={() => setIsAddTradeOpen(true)}
                         style={{
-                            ...navItemBase,
-                            background: 'var(--accent-primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.45rem',
+                            padding: '0.6rem',
+                            borderRadius: 'var(--radius-md)',
+                            background: 'linear-gradient(135deg, var(--accent-primary), #6366f1)',
                             color: '#fff',
                             fontWeight: 600,
-                            justifyContent: 'center',
+                            fontSize: '0.85rem',
                             border: 'none',
+                            width: '100%',
+                            boxShadow: '0 4px 14px var(--accent-glow)',
+                            transition: 'all var(--transition-fast)',
                         }}
-                        onMouseOver={e => e.currentTarget.style.background = 'var(--accent-hover)'}
-                        onMouseOut={e => e.currentTarget.style.background = 'var(--accent-primary)'}
+                        onMouseOver={e => {
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = '0 6px 20px var(--accent-glow)';
+                        }}
+                        onMouseOut={e => {
+                            e.currentTarget.style.transform = 'none';
+                            e.currentTarget.style.boxShadow = '0 4px 14px var(--accent-glow)';
+                        }}
                     >
-                        <Plus size={16} />
+                        <Plus size={14} />
                         <span>Add Trade</span>
                     </button>
                     {!hasLoggedToday && (
                         <button
                             onClick={() => setIsMoodModalOpen(true)}
                             style={{
-                                ...navItemBase,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.45rem',
+                                padding: '0.55rem',
+                                borderRadius: 'var(--radius-md)',
                                 background: 'transparent',
                                 color: 'var(--text-secondary)',
                                 border: '1px solid var(--border-color)',
-                                justifyContent: 'center',
                                 fontWeight: 500,
+                                fontSize: '0.82rem',
+                                width: '100%',
+                                transition: 'all var(--transition-fast)',
                             }}
-                            onMouseOver={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--accent-primary)'; }}
-                            onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
+                            onMouseOver={e => {
+                                e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                e.currentTarget.style.color = 'var(--accent-primary)';
+                                e.currentTarget.style.background = 'var(--accent-glow)';
+                            }}
+                            onMouseOut={e => {
+                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                                e.currentTarget.style.background = 'transparent';
+                            }}
                         >
-                            <Activity size={16} />
+                            <Activity size={13} />
                             <span>Log Mood</span>
                         </button>
                     )}
                 </div>
-            ) : null}
+            )}
 
-            {/* Nav label */}
-            <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
-                Navigate
-            </span>
+            {/* Section label */}
+            <div style={{
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: 'var(--text-muted)',
+                padding: '0 0.5rem',
+                marginBottom: '0.375rem',
+            }}>
+                Navigation
+            </div>
 
             {/* Nav Links */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem', flex: 1 }}>
                 {navLinks.map((link) => {
-                    const isActive = location.pathname === link.path;
+                    const isActive = link.exact
+                        ? location.pathname === link.path
+                        : location.pathname.startsWith(link.path) && link.path !== '/';
+                    const isActiveExact = location.pathname === link.path;
+                    const active = link.exact ? isActiveExact : isActive;
+
                     return (
                         <Link
                             key={link.path}
                             to={link.path}
                             style={{
-                                ...navItemBase,
-                                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                background: isActive ? 'var(--bg-tertiary)' : 'transparent',
-                                borderLeft: isActive ? `2px solid var(--accent-primary)` : '2px solid transparent',
-                                paddingLeft: '0.625rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.55rem',
+                                padding: '0.55rem 0.625rem',
+                                borderRadius: 'var(--radius-sm)',
+                                fontWeight: active ? 600 : 500,
+                                fontSize: '0.85rem',
+                                color: active ? 'var(--accent-secondary)' : 'var(--text-secondary)',
+                                background: active ? 'var(--accent-glow)' : 'transparent',
+                                border: active ? '1px solid rgba(79,124,246,0.2)' : '1px solid transparent',
+                                transition: 'all var(--transition-fast)',
+                                textDecoration: 'none',
+                                width: '100%',
                             }}
-                            onMouseOver={e => !isActive && (e.currentTarget.style.color = 'var(--text-primary)')}
-                            onMouseOut={e => !isActive && (e.currentTarget.style.color = 'var(--text-secondary)')}
+                            onMouseOver={e => {
+                                if (!active) {
+                                    e.currentTarget.style.color = 'var(--text-primary)';
+                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                }
+                            }}
+                            onMouseOut={e => {
+                                if (!active) {
+                                    e.currentTarget.style.color = 'var(--text-secondary)';
+                                    e.currentTarget.style.background = 'transparent';
+                                }
+                            }}
                         >
-                            {link.icon}
-                            <span>{link.label}</span>
+                            <span style={{ opacity: active ? 1 : 0.7, display: 'flex' }}>{link.icon}</span>
+                            <span style={{ flex: 1 }}>{link.label}</span>
+                            {active && <ChevronRight size={12} style={{ opacity: 0.5 }} />}
                         </Link>
                     );
                 })}
             </div>
 
             {/* Footer actions */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                <button
-                    style={{ ...navItemBase, color: 'var(--text-secondary)', border: 'none' }}
-                    onMouseOver={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                    onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
-                    onClick={toggleTheme}
-                >
-                    {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                    <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-                </button>
-                <button
-                    style={{ ...navItemBase, color: 'var(--text-secondary)', border: 'none' }}
-                    onMouseOver={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                    onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
-                    onClick={() => setIsSettingsOpen(true)}
-                >
-                    <Settings size={16} />
-                    <span>Settings</span>
-                </button>
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.125rem',
+                paddingTop: '0.875rem',
+                borderTop: '1px solid var(--border-color)',
+            }}>
+                {[
+                    {
+                        icon: theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />,
+                        label: theme === 'dark' ? 'Light Mode' : 'Dark Mode',
+                        onClick: toggleTheme,
+                    },
+                    {
+                        icon: <Settings size={14} />,
+                        label: 'Settings',
+                        onClick: () => setIsSettingsOpen(true),
+                    }
+                ].map(item => (
+                    <button
+                        key={item.label}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.55rem',
+                            padding: '0.5rem 0.625rem',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.82rem',
+                            fontWeight: 500,
+                            color: 'var(--text-muted)',
+                            border: 'none',
+                            width: '100%',
+                            textAlign: 'left',
+                            transition: 'all var(--transition-fast)',
+                        }}
+                        onMouseOver={e => {
+                            e.currentTarget.style.color = 'var(--text-primary)';
+                            e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        }}
+                        onMouseOut={e => {
+                            e.currentTarget.style.color = 'var(--text-muted)';
+                            e.currentTarget.style.background = 'transparent';
+                        }}
+                        onClick={item.onClick}
+                    >
+                        {item.icon}
+                        <span>{item.label}</span>
+                    </button>
+                ))}
             </div>
 
             <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

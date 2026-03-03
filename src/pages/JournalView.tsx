@@ -187,51 +187,49 @@ export const JournalView: React.FC = () => {
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
-            <div className="flex-between" style={{ marginBottom: '2rem', marginTop: '1rem' }}>
+            {/* Header */}
+            <div className="flex-between" style={{ marginBottom: '2rem', marginTop: '0.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: '2rem' }}>Journal Data</h1>
-                    <p className="text-secondary">{journal.name}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
+                        <div style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', padding: '0.45rem', borderRadius: '8px', display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(34,197,94,0.25)' }}>
+                            <FileText size={18} color="#fff" />
+                        </div>
+                        <h1 style={{ margin: 0, fontSize: '1.65rem' }}>{journal.name}</h1>
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Trade log and mood tracker</p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<Download size={18} />} onClick={handleExportCSV}>
-                        Export Journal
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <Button variant="ghost" icon={<Download size={16} />} onClick={handleExportCSV}>
+                        Export
                     </Button>
                     {!hasLoggedToday && (
-                        <Button variant="secondary" icon={<Activity size={18} />} onClick={() => setIsMoodModalOpen(true)}>
+                        <Button variant="secondary" icon={<Activity size={16} />} onClick={() => setIsMoodModalOpen(true)}>
                             Log Mood
                         </Button>
                     )}
-                    <Button icon={<Plus size={18} />} onClick={() => setIsAddModalOpen(true)}>
+                    <Button icon={<Plus size={16} />} onClick={() => setIsAddModalOpen(true)}>
                         Add Trade
                     </Button>
                 </div>
             </div>
 
             {/* TABS */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+            <div className="tab-bar">
                 {(['Trades', 'Mood Tracker'] as Tab[]).map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            fontWeight: 500,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            color: activeTab === tab ? 'var(--text-primary)' : 'var(--text-secondary)',
-                            borderBottom: activeTab === tab ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                            transition: 'var(--transition-fast)'
-                        }}
+                        className={`tab-item ${activeTab === tab ? 'active' : ''}`}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                     >
-                        {tab === 'Trades' ? <FileText size={16} /> : <Activity size={16} />}
+                        {tab === 'Trades' ? <FileText size={14} /> : <Activity size={14} />}
                         {tab}
                     </button>
                 ))}
             </div>
 
             {activeTab === 'Trades' && (
-                <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflowX: 'auto' }}>
+                <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 'var(--radius-lg)', overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
                         <thead>
                             <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
@@ -408,7 +406,7 @@ export const JournalView: React.FC = () => {
             )}
 
             {activeTab === 'Mood Tracker' && (
-                <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflowX: 'auto' }}>
+                <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 'var(--radius-lg)', overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
                         <thead>
                             <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
