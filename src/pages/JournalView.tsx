@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
@@ -39,20 +39,24 @@ export const JournalView: React.FC = () => {
     const [moodToEdit, setMoodToEdit] = useState<DailyMood | null>(null);
     const [expandedTradeId, setExpandedTradeId] = useState<number | null>(null);
     const [sortAsc, setSortAsc] = useState(false); // newest first by default
+    const hasPromptedRef = useRef(false);
 
     const todayDateStr = format(new Date(), 'yyyy-MM-dd');
     const hasLoggedToday = moods ? moods.some(m => m.date === todayDateStr) : false;
 
-    // Auto Daily Mood Logic
+    // Auto Daily Mood Logic — only fires once per mount once data is ready
     React.useEffect(() => {
         if (!activeJournalId || !settings?.enableMoodTracker || !moods) return;
+        if (hasPromptedRef.current) return; // already evaluated this mount
+        hasPromptedRef.current = true;
 
-        // Check local storage to prevent harassing them in a single session if they closed it today
+        // Check session storage to avoid re-opening if they dismissed it today
         const sessionKey = `mood_prompt_suppressed_${todayDateStr}`;
         const hasSuppressed = sessionStorage.getItem(sessionKey);
 
         if (!hasLoggedToday && !hasSuppressed) {
             setIsMoodModalOpen(true);
+            sessionStorage.setItem(sessionKey, 'true'); // Automatically suppress it right off
         }
     }, [activeJournalId, settings?.enableMoodTracker, moods]);
 

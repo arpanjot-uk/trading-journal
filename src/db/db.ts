@@ -151,4 +151,53 @@ export const initializeSettings = async () => {
   }
 };
 
+export const initializeExampleJournal = async () => {
+  // Guard: only seed once ever
+  if (localStorage.getItem('exampleJournalSeeded') === 'true') return;
+
+  // Safety: skip if user already has journals (avoids polluting existing accounts)
+  const count = await db.journals.count();
+  if (count > 0) {
+    localStorage.setItem('exampleJournalSeeded', 'true');
+    return;
+  }
+
+  try {
+    // ── Forex Q1 2025 journal ────────────────────────────────────────────────
+    const { SEED_JOURNAL, getSeedTrades, getSeedMoods } = await import('./seedData');
+
+    const forexId = (await db.journals.add({
+      name: SEED_JOURNAL.name,
+      startingBalance: SEED_JOURNAL.startingBalance,
+      createdAt: SEED_JOURNAL.createdAt,
+      updatedAt: SEED_JOURNAL.updatedAt,
+    })) as number;
+
+    await db.trades.bulkAdd(getSeedTrades().map(t => ({ ...t, journalId: forexId })) as any);
+    await db.dailyMoods.bulkAdd(getSeedMoods().map(m => ({ ...m, journalId: forexId })) as any);
+
+    console.log(`[seed] Forex journal created (id=${forexId})`);
+
+    // ── US Stocks Early 2026 journal ─────────────────────────────────────────
+    const { SEED_STOCKS_JOURNAL, getSeedStocksTrades, getSeedStocksMoods } = await import('./seedDataStocks');
+
+    const stocksId = (await db.journals.add({
+      name: SEED_STOCKS_JOURNAL.name,
+      startingBalance: SEED_STOCKS_JOURNAL.startingBalance,
+      createdAt: SEED_STOCKS_JOURNAL.createdAt,
+      updatedAt: SEED_STOCKS_JOURNAL.updatedAt,
+    })) as number;
+
+    await db.trades.bulkAdd(getSeedStocksTrades().map(t => ({ ...t, journalId: stocksId })) as any);
+    await db.dailyMoods.bulkAdd(getSeedStocksMoods().map(m => ({ ...m, journalId: stocksId })) as any);
+
+    console.log(`[seed] Stocks journal created (id=${stocksId})`);
+
+    localStorage.setItem('exampleJournalSeeded', 'true');
+  } catch (err) {
+    console.error('[seed] Failed to seed example journals:', err);
+  }
+};
+
 export { db };
+
