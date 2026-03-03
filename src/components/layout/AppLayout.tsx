@@ -8,7 +8,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         initializeSettings().catch(console.error);
 
         // Load custom theme
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
     }, []);
 

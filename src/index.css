@@ -567,21 +567,25 @@ textarea.input-base:focus {
    ===================================================== */
 
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
+  margin: 8px;
+  /* Keeps scrollbar away from rounded corners top/bottom */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-elevated);
+  background-color: var(--text-muted);
   border-radius: var(--radius-round);
+  border: 3px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background-color: var(--text-secondary);
 }
 
 /* =====================================================

@@ -16,7 +16,7 @@ export const Navbar: React.FC = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
     const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
-    const [theme, setTheme] = useState('dark');
+    const [theme, setTheme] = useState('light');
     const location = useLocation();
     const { activeJournalId } = useJournalContext();
 
@@ -28,7 +28,7 @@ export const Navbar: React.FC = () => {
     }, [activeJournalId, todayDateStr]);
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
         document.documentElement.setAttribute('data-theme', savedTheme);
     }, []);

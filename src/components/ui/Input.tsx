@@ -127,7 +127,8 @@ export const Select: React.FC<SelectProps> = ({
         position: 'absolute',
         top: 'calc(100% + 4px)',
         left: 0,
-        right: 0,
+        minWidth: '100%',
+        width: 'max-content',
         background: 'var(--bg-primary)',
         border: '1px solid var(--border-color)',
         borderRadius: 'var(--radius-md)',
@@ -145,9 +146,11 @@ export const Select: React.FC<SelectProps> = ({
         color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)',
         background: isSelected ? 'var(--bg-tertiary)' : 'transparent',
         fontSize: '0.95rem',
+        lineHeight: '1.4',
         borderRadius: 'var(--radius-sm)',
         transition: 'all var(--transition-fast)',
         marginBottom: '2px',
+        whiteSpace: 'nowrap',
     });
 
     const selectedOption = options.find(opt => String(opt.value) === String(value));
